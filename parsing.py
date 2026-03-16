@@ -10,16 +10,12 @@
 #                                                                             #
 # ****************************************************************************#
 
-from .simulation_engine import SimEngine
-from .errors import (
-    ConfigError,
-    FirstLineError,
-    KeysError,
-    FormatHubError,
-    FormatMetadatasError)
+from simulation_engine import SimEngine
+from errors import (ConfigError, FirstLineError, KeysError, FormatHubError,
+                    FormatMetadatasError)
 
 
-def first_line(first: str) -> int:
+def first_line_parse(first: str) -> int:
 
     first_line_array: list[str] = first.split(':')
     if first_line_array[0] != 'nb_drones':
@@ -31,7 +27,7 @@ def first_line(first: str) -> int:
 
 
 def hub(role: str, line: str) -> dict[str, str]:
-    line_array: list[str] = line.split(' ', 3)
+    line_array: list[str] = line.strip().split(' ', 3)
     if len(line_array) < 3 or len(line_array) > 4:
         raise FormatHubError()
     for element in line_array[1:3]:
@@ -44,6 +40,7 @@ def hub(role: str, line: str) -> dict[str, str]:
         'role': role
     }
     if len(line_array) == 4:
+        # print(f"3: {line_array[3]}")
         if not (line_array[3].startswith('[') and line_array[3].endswith(']')):
             raise FormatHubError()
         if (line_array[3].count(' ') + 1) != (line_array[3].count('=')):
@@ -67,22 +64,38 @@ def hub(role: str, line: str) -> dict[str, str]:
 
 def parsing(sim: SimEngine, path: str):
 
+    start: bool = False
+    end: bool = False
     with open(path, 'r') as f:
         line: str = f.readline()
         first_line: bool = True
         while line:
-            if line.count(':') != 1:
-                raise ConfigError('Each line (except commentaries) should have'
-                                  ' "<key>:<value>" format')
-            if not line.startswith('#'):
+            if not line.startswith('#') and line != '\n':
+                # print(f"line: {line}")
+                if line.count(':') != 1:
+                    raise ConfigError(
+                        'Each line (except commentaries) should have'
+                        ' "<key>:<value>" format')
+                line = line.strip('\n').strip()
                 if first_line:
                     first_line = False
-                    sim.nb_drones = first_line(line)
+                    sim.nb_drones = first_line_parse(line)
                 else:
                     line_array: list[str] = line.split(':')
                     if line_array[0] == 'connection':
+                        line_array[1] = line_array[1].strip()
                         sim.create_connection(line_array[1])
                     elif line_array[0] in ['start_hub', 'end_hub', 'hub']:
+                        if line_array[0] == 'start_hub':
+                            start = True
+                        if line_array[0] == 'end_hub':
+                            end = True
                         sim.add_hub(hub(line_array[0], line_array[1]))
                     else:
                         raise KeysError()
+            line = f.readline()
+        if not start or not end:
+            raise ConfigError(
+                'There must be one \'start_hub\' key and one'
+                ' \'end_hub\' key in the config file.'
+            )

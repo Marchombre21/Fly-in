@@ -10,8 +10,9 @@
 #                                                                             #
 # ****************************************************************************#
 
-from .field_class import Hub
-from .errors import SimError, FormatConnectionError, ConfigError
+from hub_class import Hub
+from errors import (SimError, FormatConnectionError, ConfigError,
+                    NumberLinksError)
 
 
 class SimEngine():
@@ -43,25 +44,42 @@ class SimEngine():
                 raise ConfigError(
                     'Two hubs can\'t be at the same coordonates.')
         self.__hubs.append(Hub(**hub_dict))
+        if len([hub for hub in self.__hubs if hub.role == 'start_hub']) > 1 or\
+                len([hub for hub in self.__hubs if hub.role == 'end_hub']) > 1:
+            raise ConfigError('There cannot be more than one start or end.')
 
     def create_connection(self, link: str):
-        space_count: int = link.count(' ') 
+        space_count: int = link.count(' ')
         if space_count > 1:
             raise FormatConnectionError()
         link_array: list[str] = link.split(' ')
-        # En train de gérer les connexions. Ici nous sommes sûrs qu'il y a
-        # moins de deux espaces donc le split a donné un tableau de 1 ou 2
-        # éléments. Il faut repartir sur le block d'après, refaire un split
-        # sur un - (après avoir vérifié que la string ne commence pas par []. 
-        # Ah non en fait, les names peuvent contenir n'importe quoi en fait.)
-        
-        if link.count('-') != 1:
-            raise FormatConnectionError()
-        for hub in self.__hubs:
-            # if hub.name == link_array[0]:
-            #     if hub.connected_with.get(link_array[1]):
-            #         raise ConfigError(
-            #             f'The connection between {link_array[0]}'
-            #             f' and {link_array[1]} is declared twice.')
-            #     else:
 
+        if link_array[0].count('-') != 1:
+            raise FormatConnectionError()
+        names: list[str] = link_array[0].split('-')
+        for name in names:
+            if name not in [hub.name for hub in self.__hubs]:
+                raise ConfigError(
+                    'You try to make a connection with an unknown hub name.')
+        for hub in self.__hubs:
+            if hub.name == names[0]:
+                if hub.connected_with.get(names[1]):
+                    raise ConfigError(f'The connection between {names[0]}'
+                                      f' and {names[1]} is declared twice.')
+                cap_link: int = 1
+                if len(link_array) == 2:
+                    if not (link_array[1].startswith('[') and
+                            link_array[1].endswith(']')) or\
+                            link_array[1].count('=') != 1:
+                        raise FormatConnectionError()
+                    try:
+                        cap_link = int(link_array[1].split('=')[1].strip(']'))
+                        if cap_link < 1:
+                            raise NumberLinksError()
+                    except ValueError:
+                        raise NumberLinksError()
+                hub.connected_with.update({names[1]: cap_link})
+                hub_linked: Hub = [
+                    hub for hub in self.__hubs if hub.name == names[1]
+                ][0]
+                hub_linked.connected_with.update({names[0]: cap_link})

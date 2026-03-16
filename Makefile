@@ -2,7 +2,7 @@ VENV := .venv
 PYTHON := $(VENV)/bin/python3
 UV := uv
 PROG := fly_in.py
-SRC := fly_in.py \
+SRCFILES := fly_in.py \
 	simulation_engine.py \
 	field_class.py \
 	errors.py \
@@ -20,7 +20,8 @@ install:
 	@$(UV) sync
 
 run:
-	@$(UV) run $(PYTHON) $(PROG)
+	@$(UV) run $(PYTHON) $(PROG) \
+	/home/bfitte/Projets/Circle_3/Fly_in/maps/easy/01_linear_path.txt
 
 clean:
 	find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
@@ -31,8 +32,8 @@ clean-all: clean
 	rm -rf $(VENV)
 
 lint:
-	$(UV) run $(PYTHON) -m flake8 $(SRC)
-	$(UV) run $(PYTHON) -m mypy $(SRC) \
+	$(UV) run $(PYTHON) -m flake8 $(SRCFILES)
+	$(UV) run $(PYTHON) -m mypy $(SRCFILES) \
 	--warn-return-any \
 	--warn-unused-ignores \
 	--ignore-missing-imports \
@@ -40,7 +41,7 @@ lint:
 	--check-untyped-defs \
 
 lint-strict:
-	$(UV) run $(PYTHON) -m flake8 $(SRC)
-	$(UV) run $(PYTHON) -m mypy $(SRC) --strict
+	$(UV) run $(PYTHON) -m flake8 $(SRCFILES)
+	$(UV) run $(PYTHON) -m mypy $(SRCFILES) --strict
 
 .PHONY: help install run clean lint lint-strict

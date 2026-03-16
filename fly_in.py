@@ -11,10 +11,11 @@
 # ****************************************************************************#
 
 import sys
-from .errors import ArgError
+from errors import ArgError
+from parsing import parsing
 from pydantic import ValidationError
 from pydantic_core import PydanticCustomError
-from .simulation_engine import SimEngine
+from simulation_engine import SimEngine
 
 
 def main() -> None:
@@ -22,8 +23,7 @@ def main() -> None:
     if len(sys.argv) > 2:
         raise ArgError(
             'Too much arguments! Only one argument is allowed (the path to the'
-            'map file).'
-        )
+            'map file).')
 
     if len(sys.argv) == 2:
         path_map: str = sys.argv[1]
@@ -31,13 +31,18 @@ def main() -> None:
         path_map = 'map.txt'
 
     sim_engine: SimEngine = SimEngine()
-    
+    parsing(sim_engine, path_map)
+    print(sim_engine.nb_drones)
+
 
 if __name__ == "__main__":
     try:
         main()
-    # except Exception as e:
-    #     print(e)
+    except Exception as e:
+        print(e)
     except (PydanticCustomError, ValidationError) as e:
         for error in e.errors():
-            print(error)
+            print(
+                f"{error.get('loc')[0]}: {error.get('input')}\n"
+                f"{error.get('msg')}"
+            )
