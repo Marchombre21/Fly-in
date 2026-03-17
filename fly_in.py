@@ -11,11 +11,13 @@
 # ****************************************************************************#
 
 import sys
+import arcade
 from errors import ArgError
 from parsing import parsing
 from pydantic import ValidationError
 from pydantic_core import PydanticCustomError
 from simulation_engine import SimEngine
+from image import View
 
 
 def main() -> None:
@@ -32,7 +34,9 @@ def main() -> None:
 
     sim_engine: SimEngine = SimEngine()
     parsing(sim_engine, path_map)
-    print(sim_engine.nb_drones)
+    view: View = View(2000, 1300, 'Fly-in')
+    view.setup(sim_engine)
+    arcade.run()
 
 
 if __name__ == "__main__":

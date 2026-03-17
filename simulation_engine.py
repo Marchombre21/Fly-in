@@ -33,6 +33,10 @@ class SimEngine():
                 ' value.')
         self.__nb_drones = nb
 
+    @property
+    def hubs(self):
+        return self.__hubs
+
     def add_hub(self, hub_dict: dict[str, str]) -> None:
         name: str = hub_dict.get('name')
         x: str = hub_dict.get('x')

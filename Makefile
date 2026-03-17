@@ -21,7 +21,7 @@ install:
 
 run:
 	@$(UV) run $(PYTHON) $(PROG) \
-	/home/bfitte/Projets/Circle_3/Fly_in/maps/easy/01_linear_path.txt
+	/home/bfitte/Projets/Circle_3/Fly_in/maps/hard/02_capacity_hell.txt
 
 clean:
 	find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true

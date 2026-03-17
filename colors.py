@@ -11,6 +11,8 @@
 # ****************************************************************************#
 
 from enum import Enum
+from arcade import color
+from arcade.types import Color
 
 
 class Colors(Enum):
@@ -32,3 +34,9 @@ class Colors(Enum):
     BLACK = 'black'
     WHITE = 'white'
     IVORY = 'ivory'
+    CYAN = 'cyan'
+
+
+def get_color(color_name: str) -> Color:
+    new_color: str = color_name.strip().upper()
+    return getattr(color, new_color, color.DARK_BLUE)
