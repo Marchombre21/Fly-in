@@ -22,22 +22,16 @@ from image import View
 
 def main() -> None:
 
-    path_map: str = input('Which map? : ')
-    accept_negative: str | bool = input(
-        'Accept negative coordonates? (y/n) : ')
-    accept_negative = True if accept_negative == 'y' else False
-    # if len(sys.argv) > 2:
-    #     raise ArgError(
-    #         'Too much arguments! Only one argument is allowed (the path to the'
-    #         'map file).')
+    if len(sys.argv) > 1:
+        raise ArgError('Too much arguments!')
 
-    # if len(sys.argv) == 2:
-    #     path_map: str = sys.argv[1]
-    # else:
-    #     path_map = 'map.txt'
+    path_map: str = input('Which map? : ')
+    accept_negative: str = input('\nAccept negative coordinates? (y/n) : ')
+    accept_negative = True if accept_negative == 'y' else False
 
     sim_engine: SimEngine = SimEngine(accept_negative)
     parsing(sim_engine, path_map)
+    sim_engine.check_coordonates()
     view: View = View(2000, 1300, 'Fly-in')
     view.setup(sim_engine)
     arcade.run()

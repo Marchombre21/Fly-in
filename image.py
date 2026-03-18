@@ -26,7 +26,7 @@ class View(arcade.Window):
         super().__init__(width, height, title)
         self.background_color: Color = color.BLACK
         self.drones_texture: Texture = arcade.load_texture(
-            ":resources:images/space_shooter/playerShip1_green.png")
+            ":resources:images/topdown_tanks/tank_red.png")
         self.path_texture: Texture = arcade.load_texture(
             ":resources:images/topdown_tanks/tileGrass_roadEast.png")
         self.drones_list: SpriteList = SpriteList()
@@ -49,8 +49,8 @@ class View(arcade.Window):
         for n in range(sim.nb_drones):
             sprite: Sprite = Sprite(self.drones_texture,
                                     scale=self.scaling,
-                                    angle=90)
-            sprite.center_x = self.hub_width / 2
+                                    angle=270)
+            sprite.center_x = self.hub_width / 4
             sprite.center_y = (cell_height / 2) + (n * cell_height)
             self.drones_list.append(sprite)
 
@@ -89,6 +89,9 @@ class View(arcade.Window):
 
                     # I define the starting points and ending points of the
                     # path
+                    # Je suis en train de réfléchir pour changer le display du path
+                    # pour qu'il commence plutôt sur le bord du hub et plus au centre.
+                    # Pareil pour l'arrivée
                     start_x: float = (hub.x + 0.5) * self.hub_width + (
                         self.offset_x / 2)
                     start_y: float = (hub.y + 0.5) * self.hub_height + (
@@ -110,8 +113,10 @@ class View(arcade.Window):
 
                     # If one path must cross over another path I add an offset
                     path_offset: float = 0.0
-                    if (distance > self.hub_width and angle_deg == 0) or\
-                            (distance > self.hub_height and angle_deg == 90):
+                    if (int(distance) > int(self.hub_width) and angle_deg
+                            == 0) or (int(distance) > int(self.hub_height)
+                                      and angle_deg == 90):
+                        print(hub.name, distance, self.hub_width, angle_deg)
                         path_offset = text_width * 1.5
 
                     # The offset is calculated by multiplying the size of a

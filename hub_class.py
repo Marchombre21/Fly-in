@@ -16,8 +16,8 @@ from colors import Colors
 
 
 class Hub(BaseModel):
-    x: int = Field(ge=0)
-    y: int = Field(ge=0)
+    x: int
+    y: int
     name: str = Field(pattern=r'[^ -]')
     zone: str = Field(default='normal')
     color: str | None = Field(default=None)
