@@ -17,7 +17,8 @@ from errors import (SimError, FormatConnectionError, ConfigError,
 
 class SimEngine():
 
-    def __init__(self):
+    def __init__(self, accept: bool):
+        self.__accept = accept
         self.__hubs: list[Hub] = []
         self.__nb_drones: int = 0
 

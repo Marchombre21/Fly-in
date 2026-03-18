@@ -11,8 +11,8 @@
 # ****************************************************************************#
 
 import arcade
+import math
 from colors import get_color
-from errors import ConfigError
 from arcade.types import Color
 from arcade.texture import Texture
 from arcade import Sprite, SpriteList, color
@@ -27,10 +27,8 @@ class View(arcade.Window):
         self.background_color: Color = color.BLACK
         self.drones_texture: Texture = arcade.load_texture(
             ":resources:images/space_shooter/playerShip1_green.png")
-        self.path_east_west_texture: Texture = arcade.load_texture(
+        self.path_texture: Texture = arcade.load_texture(
             ":resources:images/topdown_tanks/tileGrass_roadEast.png")
-        self.path_north_south_texture: Texture = arcade.load_texture(
-            ":resources:images/topdown_tanks/tileGrass_roadNorth.png")
         self.drones_list: SpriteList = SpriteList()
         self.paths_list: SpriteList = SpriteList()
         self.hubs_list: ShapeElementList = ShapeElementList()
@@ -77,45 +75,83 @@ class View(arcade.Window):
         already_linked: list[str] = []
         for hub in sim.hubs:
             for key in hub.connected_with.keys():
+
+                # I check if the connection has already been established.
                 if hub.name + key not in already_linked:
+
+                    text_width: int = self.path_texture.width
+
                     x: int
                     y: int
                     x, y = [(linked_hub.x, linked_hub.y)
                             for linked_hub in sim.hubs
                             if linked_hub.name == key][0]
-                    if (hub.x < x or hub.x > x) and hub.y == y:
-                        texture: Texture = self.path_east_west_texture
-                        multiplier: int = hub.x + 1 if hub.x < x else hub.x
-                        center_x: float = self.hub_width * multiplier + (
-                            self.offset_x / 2)
 
-                        center_y: float = self.hub_height / 2 + (
-                            hub.y * self.hub_height)
-                    elif (hub.y < y or hub.y > y) and hub.x == x:
-                        texture = self.path_north_south_texture
-                        multiplier = hub.y + 1 if hub.y < y else hub.y
-                        center_x = self.hub_width / 2 + (hub.x *
-                                                         self.hub_width)
-                        center_y = self.hub_height * multiplier + (
-                            self.offset_y / 2)
-                    else:
-                        raise ConfigError(
-                            f'Impossible connection.{hub.name} + {key}')
-                    sprite: Sprite = Sprite(texture, self.scaling, center_x,
-                                            center_y)
-                    self.paths_list.append(sprite)
+                    # I define the starting points and ending points of the
+                    # path
+                    start_x: float = (hub.x + 0.5) * self.hub_width + (
+                        self.offset_x / 2)
+                    start_y: float = (hub.y + 0.5) * self.hub_height + (
+                        self.offset_y / 2)
+                    end_x: float = (x + 0.5) * self.hub_width + (
+                        self.offset_x / 2)
+                    end_y: float = (y + 0.5) * self.hub_height + (
+                        self.offset_y / 2)
+
+                    distance: float = arcade.math.get_distance(
+                        start_x, start_y, end_x, end_y)
+
+                    angle_deg: float = arcade.math.get_angle_degrees(
+                        start_x, start_y, end_x, end_y)
+
+                    # I convert into radians because the processors and
+                    # libraries use them instead of degrees
+                    angle_rad: float = math.radians(angle_deg)
+
+                    # If one path must cross over another path I add an offset
+                    path_offset: float = 0.0
+                    if (distance > self.hub_width and angle_deg == 0) or\
+                            (distance > self.hub_height and angle_deg == 90):
+                        path_offset = text_width * 1.5
+
+                    # The offset is calculated by multiplying the size of a
+                    # sprite by the new angle to which I added 90 degrees using
+                    # the formula π/2
+                    new_offset_x: float = path_offset * (
+                        math.cos(angle_rad + (math.pi / 2)))
+                    new_offset_y: float = path_offset * (
+                        math.sin(angle_rad + (math.pi / 2)))
+
+                    start_x += new_offset_x
+                    start_y += new_offset_y
+
+                    num_sprites: int = int(distance / text_width)
+
+                    for i in range(num_sprites):
+                        current_distance: float = (i * text_width) + (
+                            text_width / 2)
+
+                        center_x: float = start_x + (math.cos(angle_rad) *
+                                                     current_distance)
+                        center_y: float = start_y - (math.sin(angle_rad) *
+                                                     current_distance)
+
+                        sprite: Sprite = Sprite(self.path_texture, 1.0,
+                                                center_x, center_y, angle_deg)
+                        self.paths_list.append(sprite)
+
                     already_linked.append(key + hub.name)
 
     def setup(self, sim: SimEngine):
         self.init_hubs(sim)
         self.init_drones(sim)
-        # self.init_paths(sim)
+        self.init_paths(sim)
 
     def on_draw(self):
         self.clear()
         self.hubs_list.draw()
+        self.paths_list.draw()
         self.drones_list.draw()
-        # self.paths_list.draw()
 
     def on_key_press(self, key):
         """Called whenever a key is pressed. """
