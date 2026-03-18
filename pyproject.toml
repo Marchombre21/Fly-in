@@ -7,4 +7,5 @@ requires-python = ">=3.10"
 dependencies = [
     "arcade>=3.3.3",
     "pydantic>=2.12.5",
+    "pytest>=9.0.2",
 ]

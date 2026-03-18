@@ -18,7 +18,7 @@ from colors import Colors
 class Hub(BaseModel):
     x: int
     y: int
-    name: str = Field(pattern=r'[^ -]')
+    name: str = Field(pattern=r'^[^ -]+$')
     zone: str = Field(default='normal')
     color: str | None = Field(default=None)
     max_drones: int = Field(default=1, ge=1)

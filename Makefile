@@ -43,4 +43,7 @@ lint-strict:
 	$(UV) run $(PYTHON) -m flake8 $(SRCFILES)
 	$(UV) run $(PYTHON) -m mypy $(SRCFILES) --strict
 
+test:
+	$(UV) run pytest
+
 .PHONY: help install run clean lint lint-strict

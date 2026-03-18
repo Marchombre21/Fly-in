@@ -48,13 +48,10 @@ def hub(role: str, line: str) -> dict[str, str]:
             raise FormatHubError()
         meta_array: list[str] = line_array[3].strip('[').strip(']').split()
         for element in meta_array:
-            if element.count('=') == 1:
-                element_array: list[str] = element.split('=')
-                if element_array[0] in ['zone', 'color', 'max_drones']:
-                    if hub_dict.get(element_array[0]) is None:
-                        hub_dict.update({element_array[0]: element_array[1]})
-                    else:
-                        raise FormatMetadatasError()
+            element_array: list[str] = element.split('=')
+            if element_array[0] in ['zone', 'color', 'max_drones']:
+                if hub_dict.get(element_array[0]) is None:
+                    hub_dict.update({element_array[0]: element_array[1]})
                 else:
                     raise FormatMetadatasError()
             else:
