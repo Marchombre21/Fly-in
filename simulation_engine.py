@@ -11,6 +11,7 @@
 # ****************************************************************************#
 
 from hub_class import Hub
+from drone import Drone
 from errors import (SimError, FormatConnectionError, ConfigError,
                     NumberLinksError)
 
@@ -102,3 +103,11 @@ class SimEngine():
                     hub for hub in self.__hubs if hub.name == names[1]
                 ][0]
                 hub_linked.connected_with.update({names[0]: cap_link})
+
+    def add_drones(self) -> None:
+        start_hub: Hub = [
+            hub for hub in self.__hubs if hub.name == 'start_hub'
+        ][0]
+        self.list_drones: list[Drone] = []
+        for _ in range(self.nb_drones):
+            self.list_drones.append(Drone(start_hub))

@@ -13,6 +13,7 @@
 from pydantic import BaseModel, Field, field_validator
 from pydantic_core import PydanticCustomError
 from colors import Colors
+from drone import Drone
 
 
 class Hub(BaseModel):
@@ -24,6 +25,7 @@ class Hub(BaseModel):
     max_drones: int = Field(default=1, ge=1)
     role: str
     connected_with: dict[str, int] = Field(default_factory=dict)
+    drones_in: list[Drone] = Field(default_factory=list)
 
     @field_validator('zone', mode='after')
     @classmethod

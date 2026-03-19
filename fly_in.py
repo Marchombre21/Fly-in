@@ -32,6 +32,7 @@ def main() -> None:
     sim_engine: SimEngine = SimEngine(accept_negative)
     parsing(sim_engine, path_map)
     sim_engine.check_coordonates()
+    sim_engine.add_drones()
     view: View = View(2000, 1300, 'Fly-in')
     view.setup(sim_engine)
     arcade.run()
