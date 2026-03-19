@@ -5,7 +5,7 @@ start_hub: start 0 0 [color=green max_drones=15]
 
 # Layer 1: Initial distribution nightmare
 hub: dist_gate1 1 0 [color=orange max_drones=1]
-hub: dist_gate2 1 1 [color=orange max_drones= 1]
+truc: dist_gate2 1 1 [color=orange max_drones=1]
 hub: dist_gate3 1 -1 [color=orange max_drones=1]
 
 # Layer 2: Dead end maze with loops
