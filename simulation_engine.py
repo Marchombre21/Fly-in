@@ -20,7 +20,7 @@ class SimEngine():
 
     def __init__(self, accept: bool):
         self.__accept = accept
-        self.__hubs: list[Hub] = []
+        self.__hubs: dict[str, Hub] = {}
         self.__nb_drones: int = 0
 
     @property
@@ -40,32 +40,35 @@ class SimEngine():
         return self.__hubs
 
     def check_coordonates(self):
-        min_x: int = min([hub.x for hub in self.__hubs])
-        min_y: int = min([hub.y for hub in self.__hubs])
+        min_x: int = min([hub.x for hub in self.__hubs.values()])
+        min_y: int = min([hub.y for hub in self.__hubs.values()])
         if (min_y < 0 or min_x < 0) and not self.__accept:
             raise ConfigError('Coordonates can\'t be negative integers')
         if min_x < 0:
             offset: int = abs(min_x)
-            for hub in self.hubs:
+            for hub in self.hubs.values():
                 hub.x += offset
         if min_y < 0:
             offset: int = abs(min_y)
-            for hub in self.hubs:
+            for hub in self.hubs.values():
                 hub.y += offset
 
     def add_hub(self, hub_dict: dict[str, str]) -> None:
         name: str = hub_dict.get('name')
         x: str = hub_dict.get('x')
         y: str = hub_dict.get('y')
-        for hub in self.__hubs:
+        for hub in self.__hubs.values():
             if hub.name == name:
                 raise ConfigError('All hubs must have different names.')
             if str(hub.x) == x and str(hub.y) == y:
                 raise ConfigError(
                     'Two hubs can\'t be at the same coordonates.')
-        self.__hubs.append(Hub(**hub_dict))
-        if len([hub for hub in self.__hubs if hub.role == 'start_hub']) > 1 or\
-                len([hub for hub in self.__hubs if hub.role == 'end_hub']) > 1:
+        self.__hubs.update({name: Hub(**hub_dict)})
+        if len([
+                hub for hub in self.__hubs.values() if hub.role == 'start_hub'
+        ]) > 1 or len(
+            [hub
+             for hub in self.__hubs.values() if hub.role == 'end_hub']) > 1:
             raise ConfigError('There cannot be more than one start or end.')
 
     def create_connection(self, link: str):
@@ -78,36 +81,52 @@ class SimEngine():
             raise FormatConnectionError()
         names: list[str] = link_array[0].split('-')
         for name in names:
-            if name not in [hub.name for hub in self.__hubs]:
+            if not self.__hubs.get(name):
                 raise ConfigError(
                     'You try to make a connection with an unknown hub name.')
-        for hub in self.__hubs:
-            if hub.name == names[0]:
-                if hub.connected_with.get(names[1]):
-                    raise ConfigError(f'The connection between {names[0]}'
-                                      f' and {names[1]} is declared twice.')
-                cap_link: int = 1
-                if len(link_array) == 2:
-                    if not (link_array[1].startswith('[') and
-                            link_array[1].endswith(']')) or\
-                            link_array[1].count('=') != 1:
-                        raise FormatConnectionError()
-                    try:
-                        cap_link = int(link_array[1].split('=')[1].strip(']'))
-                        if cap_link < 1:
-                            raise NumberLinksError()
-                    except ValueError:
-                        raise NumberLinksError()
-                hub.connected_with.update({names[1]: cap_link})
-                hub_linked: Hub = [
-                    hub for hub in self.__hubs if hub.name == names[1]
-                ][0]
-                hub_linked.connected_with.update({names[0]: cap_link})
+        # for hub in self.__hubs:
+        #     if hub.name == names[0]:
+        #         if hub.connected_with.get(names[1]):
+        #             raise ConfigError(f'The connection between {names[0]}'
+        #                               f' and {names[1]} is declared twice.')
+        #         cap_link: int = 1
+        #         if len(link_array) == 2:
+        #             if not (link_array[1].startswith('[') and
+        #                     link_array[1].endswith(']')) or\
+        #                     link_array[1].count('=') != 1:
+        #                 raise FormatConnectionError()
+        #             try:
+        #                 cap_link = int(link_array[1].split('=')[1].strip(']'))
+        #                 if cap_link < 1:
+        #                     raise NumberLinksError()
+        #             except ValueError:
+        #                 raise NumberLinksError()
+        #         hub.connected_with.update({names[1]: cap_link})
+        #         hub_linked: Hub = [
+        #             hub for hub in self.__hubs if hub.name == names[1]
+        #         ][0]
+        #         hub_linked.connected_with.update({names[0]: cap_link})
+        hub: Hub = self.__hubs.get(names[0])
+        if hub.connected_with.get(names[1]):
+            raise ConfigError(f'The connection between {names[0]}'
+                              f' and {names[1]} is declared twice.')
+        cap_link: int = 1
+        if len(link_array) == 2:
+            if not (link_array[1].startswith('[') and
+                    link_array[1].endswith(']')) or\
+                    link_array[1].count('=') != 1:
+                raise FormatConnectionError()
+            try:
+                cap_link = int(link_array[1].split('=')[1].strip(']'))
+                if cap_link < 1:
+                    raise NumberLinksError()
+            except ValueError:
+                raise NumberLinksError()
+        hub.connected_with.update({names[1]: cap_link})
+        hub_linked: Hub = self.__hubs.get(names[1])
+        hub_linked.connected_with.update({names[0]: cap_link})
 
     def add_drones(self) -> None:
-        start_hub: Hub = [
-            hub for hub in self.__hubs if hub.role == 'start_hub'
-        ][0]
         self.list_drones: list[Drone] = []
         for _ in range(self.nb_drones):
-            self.list_drones.append(Drone(start_hub))
+            self.list_drones.append(Drone())

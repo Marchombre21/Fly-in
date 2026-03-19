@@ -18,6 +18,7 @@ from arcade.texture import Texture
 from arcade import Sprite, SpriteList, color
 from arcade.shape_list import ShapeElementList, create_rectangle_filled
 from simulation_engine import SimEngine
+from hub_class import Hub
 
 
 class View(arcade.Window):
@@ -26,7 +27,8 @@ class View(arcade.Window):
         super().__init__(width, height, title)
         self.background_color: Color = color.BLACK
         self.drones_texture: Texture = arcade.load_texture(
-            ":resources:images/topdown_tanks/drone-uav-unmanned-aerial-vehicle-military-vehicle-top-view-isolate-on-transparent-background-png.webp")
+            ":resources:images/topdown_tanks/drone-uav-unmanned-aerial-vehicle-military-vehicle-top-view-isolate-on-transparent-background-png.webp"
+        )
         self.path_texture: Texture = arcade.load_texture(
             ":resources:images/topdown_tanks/tileGrass_roadEast.png")
         self.drones_list: SpriteList = SpriteList()
@@ -41,6 +43,9 @@ class View(arcade.Window):
     def init_drones(self, sim: SimEngine):
 
         cell_height: float = self.hub_height / sim.nb_drones
+        start_hub: Hub = [
+            hub for hub in sim.hubs.values() if hub.role == 'start_hub'
+        ][0]
 
         # To have the scale value I use the formula: scale = target size /
         # original size.
@@ -49,9 +54,9 @@ class View(arcade.Window):
             sprite: Sprite = Sprite(self.drones_texture,
                                     scale=self.scaling,
                                     angle=270)
-            sprite.center_x = (drone.hub.x *
+            sprite.center_x = (start_hub.x *
                                self.hub_width) + self.hub_width / 4
-            sprite.center_y = (drone.hub.y * self.hub_height) + (
+            sprite.center_y = (start_hub.y * self.hub_height) + (
                 cell_height / 2) + (n * cell_height)
             # for n in range(sim.nb_drones):
             #     sprite: Sprite = Sprite(self.drones_texture,
@@ -61,26 +66,26 @@ class View(arcade.Window):
             #     sprite.center_y = (cell_height / 2) + (n * cell_height)
             self.drones_list.append(sprite)
 
-    def init_hubs(self, sim: SimEngine):
+    def init_hubs(self, hub_dict: dict[str, Hub]):
 
-        nb_col = max([hub.x for hub in sim.hubs]) + 1
-        nb_raw = max([hub.y for hub in sim.hubs]) + 1
+        nb_col = max([hub.x for hub in hub_dict.values()]) + 1
+        nb_raw = max([hub.y for hub in hub_dict.values()]) + 1
         self.hub_width = self.width / nb_col
         self.hub_height = self.height / nb_raw
-        for n in range(len(sim.hubs)):
-            color_name: Color = color.BLACK if not sim.hubs[
-                n].color else get_color(sim.hubs[n].color)
-            x: int = self.hub_width / 2 + (sim.hubs[n].x * self.hub_width)
-            y: int = self.hub_height / 2 + (sim.hubs[n].y * self.hub_height)
+        for hub in hub_dict.values():
+            color_name: Color = color.BLACK if not hub.color else get_color(
+                hub.color)
+            x: int = self.hub_width / 2 + (hub.x * self.hub_width)
+            y: int = self.hub_height / 2 + (hub.y * self.hub_height)
             hub_rect = create_rectangle_filled(x, y,
                                                self.hub_width - self.offset_x,
                                                self.hub_height - self.offset_y,
                                                color_name)
             self.hubs_list.append(hub_rect)
 
-    def init_paths(self, sim: SimEngine):
+    def init_paths(self, hubs_dict: dict[str, Hub]):
         already_linked: list[str] = []
-        for hub in sim.hubs:
+        for hub in hubs_dict.values():
             for key in hub.connected_with.keys():
 
                 # I check if the connection has already been established.
@@ -90,9 +95,7 @@ class View(arcade.Window):
 
                     x: int
                     y: int
-                    x, y = [(linked_hub.x, linked_hub.y)
-                            for linked_hub in sim.hubs
-                            if linked_hub.name == key][0]
+                    x, y = (hubs_dict.get(key).x, hubs_dict.get(key).y)
 
                     # I define the starting points and ending points of the
                     # path
@@ -155,9 +158,9 @@ class View(arcade.Window):
                     already_linked.append(key + hub.name)
 
     def setup(self, sim: SimEngine):
-        self.init_hubs(sim)
+        self.init_hubs(sim.hubs)
         self.init_drones(sim)
-        self.init_paths(sim)
+        self.init_paths(sim.hubs)
 
     def on_draw(self):
         self.clear()

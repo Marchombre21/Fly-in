@@ -10,13 +10,5 @@
 #                                                                             #
 # ****************************************************************************#
 
-from hub_class import Hub
-
-
 class Drone():
-    def __init__(self, actual_hub: Hub):
-        self.__hub: Hub = actual_hub
-
-    @property
-    def hub(self) -> Hub:
-        return self.__hub
+    pass
