@@ -26,7 +26,7 @@ class View(arcade.Window):
         super().__init__(width, height, title)
         self.background_color: Color = color.BLACK
         self.drones_texture: Texture = arcade.load_texture(
-            ":resources:images/topdown_tanks/tank_red.png")
+            ":resources:images/topdown_tanks/drone-uav-unmanned-aerial-vehicle-military-vehicle-top-view-isolate-on-transparent-background-png.webp")
         self.path_texture: Texture = arcade.load_texture(
             ":resources:images/topdown_tanks/tileGrass_roadEast.png")
         self.drones_list: SpriteList = SpriteList()
@@ -45,13 +45,20 @@ class View(arcade.Window):
         # To have the scale value I use the formula: scale = target size /
         # original size.
         self.scaling: float = (cell_height * 0.8) / self.drones_texture.width
-
-        for n in range(sim.nb_drones):
+        for n, drone in enumerate(sim.list_drones):
             sprite: Sprite = Sprite(self.drones_texture,
                                     scale=self.scaling,
                                     angle=270)
-            sprite.center_x = self.hub_width / 4
-            sprite.center_y = (cell_height / 2) + (n * cell_height)
+            sprite.center_x = (drone.hub.x *
+                               self.hub_width) + self.hub_width / 4
+            sprite.center_y = (drone.hub.y * self.hub_height) + (
+                cell_height / 2) + (n * cell_height)
+            # for n in range(sim.nb_drones):
+            #     sprite: Sprite = Sprite(self.drones_texture,
+            #                             scale=self.scaling,
+            #                             angle=270)
+            #     sprite.center_x = self.hub_width / 4
+            #     sprite.center_y = (cell_height / 2) + (n * cell_height)
             self.drones_list.append(sprite)
 
     def init_hubs(self, sim: SimEngine):
@@ -158,7 +165,7 @@ class View(arcade.Window):
         self.paths_list.draw()
         self.drones_list.draw()
 
-    def on_key_press(self, key):
+    def on_key_press(self, key: int, modifier: int):
         """Called whenever a key is pressed. """
 
         if key == arcade.key.ESCAPE:

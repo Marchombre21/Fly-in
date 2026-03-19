@@ -10,10 +10,10 @@
 #                                                                             #
 # ****************************************************************************#
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
+from typing_extensions import Self
 from pydantic_core import PydanticCustomError
 from colors import Colors
-from drone import Drone
 
 
 class Hub(BaseModel):
@@ -25,7 +25,8 @@ class Hub(BaseModel):
     max_drones: int = Field(default=1, ge=1)
     role: str
     connected_with: dict[str, int] = Field(default_factory=dict)
-    drones_in: list[Drone] = Field(default_factory=list)
+    move_cost: int = Field(0)
+    weight: int = Field(100000)
 
     @field_validator('zone', mode='after')
     @classmethod
@@ -47,3 +48,14 @@ class Hub(BaseModel):
                 ' supported.', {'Unknown color': value}
             )
         return value
+
+    @model_validator(mode='after')
+    def calculate_move_cost(self) -> Self:
+        match self.zone:
+            case 'normal' | 'priority':
+                self.move_cost = 1
+            case 'blocked':
+                self.move_cost = 10000
+            case 'restricted':
+                self.move_cost = 2
+        return self

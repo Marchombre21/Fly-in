@@ -106,7 +106,7 @@ class SimEngine():
 
     def add_drones(self) -> None:
         start_hub: Hub = [
-            hub for hub in self.__hubs if hub.name == 'start_hub'
+            hub for hub in self.__hubs if hub.role == 'start_hub'
         ][0]
         self.list_drones: list[Drone] = []
         for _ in range(self.nb_drones):

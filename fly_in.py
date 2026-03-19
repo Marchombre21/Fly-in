@@ -12,12 +12,14 @@
 
 import sys
 import arcade
+from hub_class import Hub
 from errors import ArgError
 from parsing import parsing
 from pydantic import ValidationError
 from pydantic_core import PydanticCustomError
 from simulation_engine import SimEngine
 from image import View
+from dijkstra import dijkstra
 
 
 def main() -> None:
@@ -33,9 +35,13 @@ def main() -> None:
     parsing(sim_engine, path_map)
     sim_engine.check_coordonates()
     sim_engine.add_drones()
+    hubs_dict: dict[str, Hub] = {hub.name: hub for hub in sim_engine.hubs}
+    dijkstra(hubs_dict,
+             [hub.name for hub in sim_engine.hubs if hub.role == 'end_hub'][0])
     view: View = View(2000, 1300, 'Fly-in')
     view.setup(sim_engine)
     arcade.run()
+    print([hub.weight for hub in sim_engine.hubs])
 
 
 if __name__ == "__main__":
