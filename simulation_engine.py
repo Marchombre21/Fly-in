@@ -22,6 +22,7 @@ class SimEngine():
         self.__accept = accept
         self.__hubs: dict[str, Hub] = {}
         self.__nb_drones: int = 0
+        self.__hashmap: dict[str, int]
 
     @property
     def nb_drones(self):
@@ -84,28 +85,6 @@ class SimEngine():
             if not self.__hubs.get(name):
                 raise ConfigError(
                     'You try to make a connection with an unknown hub name.')
-        # for hub in self.__hubs:
-        #     if hub.name == names[0]:
-        #         if hub.connected_with.get(names[1]):
-        #             raise ConfigError(f'The connection between {names[0]}'
-        #                               f' and {names[1]} is declared twice.')
-        #         cap_link: int = 1
-        #         if len(link_array) == 2:
-        #             if not (link_array[1].startswith('[') and
-        #                     link_array[1].endswith(']')) or\
-        #                     link_array[1].count('=') != 1:
-        #                 raise FormatConnectionError()
-        #             try:
-        #                 cap_link = int(link_array[1].split('=')[1].strip(']'))
-        #                 if cap_link < 1:
-        #                     raise NumberLinksError()
-        #             except ValueError:
-        #                 raise NumberLinksError()
-        #         hub.connected_with.update({names[1]: cap_link})
-        #         hub_linked: Hub = [
-        #             hub for hub in self.__hubs if hub.name == names[1]
-        #         ][0]
-        #         hub_linked.connected_with.update({names[0]: cap_link})
         hub: Hub = self.__hubs.get(names[0])
         if hub.connected_with.get(names[1]):
             raise ConfigError(f'The connection between {names[0]}'
