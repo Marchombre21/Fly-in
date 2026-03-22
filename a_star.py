@@ -103,30 +103,38 @@ def a_star_algorithm(sim: SimEngine) -> list[str]:
         # print("curr_hub", curr_hub_name)
         curr_hub: Hub | None = hubs_dict.get(curr_hub_name)
         # print("weight:", curr_hub.weight)
-        if curr_hub.zone == 'blocked':
+        if curr_hub.zone == "blocked":
             continue
         if curr_hub and curr_hub.role == "end_hub":
             goal_path: list[str] = reconstruct_path(curr_hub_name, came_from)
             return goal_path
-        neighbors: list[Hub] = [hubs_dict[names] for names in
-                                curr_hub.connected_with]
+        neighbors: list[Hub] = [hubs_dict[names] for names in curr_hub.connected_with]
 
         # Check all possible neighbors of the current cell
         # and register new ones
         turn += 1
         for neighbor in neighbors:
             # print("neighbors", neighbor.name)
-            if hashmap[(neighbor.name, turn)] == curr_hub.connected_with[neighbor.name]:
+            if (
+                hashmap[(neighbor.name, turn)] >= neighbor.max_drones
+                or hashmap[(curr_hub.name + neighbor.name, turn - 1)]
+                >= curr_hub.connected_with[neighbor.name]
+            ):
                 continue
-            # J'en suis là, il faut que je continue d'ajouter les vérifications liées à la 
+            # J'en suis là, il faut que je continue d'ajouter les vérifications liées à la
             # hashmap.
             new_cost = path_cost[(curr_hub_name, turn - 1)] + neighbor.move_cost
-            if (neighbor.name, turn) not in path_cost or\
-                    new_cost < path_cost[(neighbor.name, turn)]:
+            if (neighbor.name, turn) not in path_cost or new_cost < path_cost[
+                (neighbor.name, turn)
+            ]:
                 path_cost[(neighbor.name, turn)] = new_cost
-                heappush(neighbors_list, (new_cost + neighbor.weight,
-                                          neighbor.name))
+                heappush(neighbors_list, (new_cost + neighbor.weight, neighbor.name))
                 came_from[(neighbor.name, turn)] = (curr_hub.name, turn - 1)
+                # I add one drone on the hub for the next turn
+                hashmap[(neighbor.name, turn)] += 1
+                # I add one drone on the connection between the hubs for
+                # this turn
+                hashmap[(curr_hub.name + neighbor.name, turn - 1)] += 1
                 # print("Path_cost", path_cost)
                 # print("neighbors_list", neighbors_list)
                 # print("Came from", came_from)
