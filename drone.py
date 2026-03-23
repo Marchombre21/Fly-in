@@ -11,4 +11,13 @@
 # ****************************************************************************#
 
 class Drone():
-    pass
+    def __init__(self):
+        self.__path: list[str] = []
+
+    @property
+    def path(self) -> list[str]:
+        return self.__path
+
+    @path.setter
+    def path(self, path_list: list[str]) -> None:
+        self.__path = path_list

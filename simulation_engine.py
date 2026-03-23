@@ -12,6 +12,7 @@
 
 from hub_class import Hub
 from drone import Drone
+from collections import defaultdict
 from errors import (SimError, FormatConnectionError, ConfigError,
                     NumberLinksError)
 
@@ -22,7 +23,11 @@ class SimEngine():
         self.__accept = accept
         self.__hubs: dict[str, Hub] = {}
         self.__nb_drones: int = 0
-        self.__hashmap: dict[str, int]
+        self.__hashmap: dict[tuple[str, int], int] = defaultdict(int)
+
+    @property
+    def hashmap(self) -> dict[tuple[str, int], int]:
+        return self.__hashmap
 
     @property
     def nb_drones(self):
