@@ -13,45 +13,6 @@ from heapq import heappop, heappush
 from hub_class import Hub
 from simulation_engine import SimEngine
 
-# def get_neighbors(self, cell: tuple[int, int]) -> list[tuple[int, int]]:
-#     """
-#     Returns the list of neighboring cells that can be accessed
-#     from the current cell
-#     """
-#     row, col = cell
-#     cell_walls: int = Border(self.maze[row][col])
-#     neighbors: list[tuple[int, int]] = []
-
-#     # If no NORTH wall -> there's a NORTH neighbor (checking diff 0001)
-#     if not (cell_walls & Border.NORTH):
-#         neighbors.append((row - 1, col))
-
-#     # If no SOUTH wall -> there's a SOUTH neighbor (checking diff 0010)
-#     if not (cell_walls & Border.SOUTH):
-#         neighbors.append((row + 1, col))
-
-#     # If no WEST wall -> there's a WEST neighbor (checking diff 0100)
-#     if not (cell_walls & Border.WEST):
-#         neighbors.append((row, col - 1))
-
-#     # If no EAST wall -> there's a EAST neighbor (checking diff 1000)
-#     if not (cell_walls & Border.EAST):
-#         neighbors.append((row, col + 1))
-#     return neighbors
-
-# @staticmethod
-# def h(cell1: tuple[int, int], cell2: tuple[int, int]) -> int:
-#     """
-#     The Heuristic function chosen here is the
-#     [Manhattan Distance](https://en.wikipedia.org/wiki/Taxicab_geometry)
-
-#     Calculate the distance between 2 points on a grid by summing the
-#     absolute differences in their x and y coordinates
-#     """
-#     x1, y1 = cell1
-#     x2, y2 = cell2
-#     return abs(x1 - x2) + abs(y1 - y2)
-
 
 def reconstruct_path(node: str, came_from: dict[str, str]) -> list[str]:
     """
