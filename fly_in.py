@@ -39,21 +39,25 @@ def main() -> None:
         sim_engine.hubs,
         [hub.name for hub in sim_engine.hubs.values() if hub.role == "end_hub"][0],
     )
-    a_star_algorithm(sim_engine)
-    # print(a_star_algorithm(sim_engine))
-    view: View = View(1800, 720, "Fly-in")
+    for drone in sim_engine.list_drones:
+        drone.path = a_star_algorithm(sim_engine)
+        print(drone.path)
+        width: int
+        height: int
+        width, height = arcade.get_display_size()
+    view: View = View(width / 2, height / 2, "Fly-in")
     view.setup(sim_engine)
     arcade.run()
     # print([hub.weight for hub in sim_engine.hubs.values()])
 
 
 if __name__ == "__main__":
-    try:
+    # try:
         main()
-    except Exception as e:
-        print(e)
-    except (PydanticCustomError, ValidationError) as e:
-        for error in e.errors():
-            print(
-                f"{error.get('loc')[0]}: {error.get('input')}\n" f"{error.get('msg')}"
-            )
+    # except Exception as e:
+    #     print(e)
+    # except (PydanticCustomError, ValidationError) as e:
+    #     for error in e.errors():
+    #         print(
+    #             f"{error.get('loc')[0]}: {error.get('input')}\n" f"{error.get('msg')}"
+    #         )

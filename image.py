@@ -19,26 +19,30 @@ from arcade import Sprite, SpriteList, color
 from arcade.shape_list import ShapeElementList, create_rectangle_filled
 from simulation_engine import SimEngine
 from hub_class import Hub
+from drone import Drone
 
 
 class View(arcade.Window):
 
     def __init__(self, width: int, height: int, title: str):
         super().__init__(width, height, title)
+        self.set_update_rate(0.2)
         self.background_color: Color = color.BLACK
         self.drones_texture: Texture = arcade.load_texture(
-            "my_face/mi_content-removebg-preview.png"
-        )
+            "my_face/mi_content-removebg-preview.png")
         self.path_texture: Texture = arcade.load_texture(
             ":resources:images/topdown_tanks/tileGrass_roadEast.png")
-        self.drones_list: SpriteList = SpriteList()
-        self.paths_list: SpriteList = SpriteList()
+        self.drones_list_sprite: SpriteList = SpriteList()
+        self.paths_list: dict[str, SpriteList] = {}
         self.hubs_list: ShapeElementList = ShapeElementList()
         self.offset_x: int = 5
         self.offset_y: int = 5
         self.hub_width: int = 0
         self.hub_height: int = 0
         self.scaling: float = 0
+        self.turn: int = 0
+        self.drones_list: list[Drone]
+        self.dict_hubs: dict[str, Hub]
 
     def init_drones(self, sim: SimEngine):
 
@@ -50,20 +54,20 @@ class View(arcade.Window):
         # To have the scale value I use the formula: scale = target size /
         # original size.
         self.scaling: float = (cell_height * 0.8) / self.drones_texture.height
-        for n in range(len(sim.list_drones)):
-            sprite: Sprite = Sprite(self.drones_texture,
-                                    scale=self.scaling)
+        for i in range(sim.nb_drones):
+            sprite: Sprite = Sprite(self.drones_texture, scale=self.scaling)
             sprite.center_x = (start_hub.x *
                                self.hub_width) + self.hub_width / 4
             sprite.center_y = (start_hub.y * self.hub_height) + (
-                cell_height / 2) + (n * cell_height)
+                cell_height / 2) + (i * cell_height)
             # for n in range(sim.nb_drones):
             #     sprite: Sprite = Sprite(self.drones_texture,
             #                             scale=self.scaling,
             #                             angle=270)
             #     sprite.center_x = self.hub_width / 4
             #     sprite.center_y = (cell_height / 2) + (n * cell_height)
-            self.drones_list.append(sprite)
+            self.drones_list_sprite.append(sprite)
+            sim.list_drones[i].sprite = sprite
 
     def init_hubs(self, hub_dict: dict[str, Hub]):
 
@@ -125,7 +129,7 @@ class View(arcade.Window):
                     if (int(distance) > int(self.hub_width) and angle_deg
                             == 0) or (int(distance) > int(self.hub_height)
                                       and angle_deg == 90):
-                        print(hub.name, distance, self.hub_width, angle_deg)
+                        # print(hub.name, distance, self.hub_width, angle_deg)
                         path_offset = text_width * 1.5
 
                     # The offset is calculated by multiplying the size of a
@@ -141,6 +145,7 @@ class View(arcade.Window):
 
                     num_sprites: int = int(distance / text_width)
 
+                    sprite_list: SpriteList = SpriteList()
                     for i in range(num_sprites):
                         current_distance: float = (i * text_width) + (
                             text_width / 2)
@@ -152,20 +157,63 @@ class View(arcade.Window):
 
                         sprite: Sprite = Sprite(self.path_texture, 1.0,
                                                 center_x, center_y, angle_deg)
-                        self.paths_list.append(sprite)
+                        sprite_list.append(sprite)
 
+                    self.paths_list.update({key + hub.name: sprite_list})
                     already_linked.append(key + hub.name)
 
     def setup(self, sim: SimEngine):
+        self.drones_list = sim.list_drones
+        self.dict_hubs = sim.hubs
         self.init_hubs(sim.hubs)
         self.init_drones(sim)
         self.init_paths(sim.hubs)
 
+    def on_update(self, delta_time):
+        all_hubs_reached: bool = True
+        for i, drone in enumerate(self.drones_list):
+            if not drone.finish:
+                # print('actual', drone.actual_location)
+                # print('path', drone.path)
+                # print('turn', self.turn)
+                if drone.actual_location != drone.path[self.turn + 1]:
+                    all_hubs_reached = False
+                    if drone.on_connection:
+                        for i, sprite in enumerate(drone.on_connection):
+                            if sprite.center_x == drone.sprite.center_x and\
+                                    sprite.center_y == drone.sprite.center_y:
+                                drone.sprite.center_x = drone.on_connection[
+                                    i + 1].center_x
+                                drone.sprite.center_y = drone.on_connection[
+                                    i + 1].center_y
+                                if i + 1 == len(drone.on_connection) - 1:
+                                    drone.on_connection = None
+                                    drone.actual_location = drone.path[
+                                        self.turn + 1]
+                                    if self.dict_hubs[drone.path[
+                                            self.turn + 1]].role == 'end_hub':
+                                        drone.finish = True
+                                break
+                    else:
+                        # print(self.paths_list)
+                        # print(drone.actual_location + drone.path[self.turn + 1])
+                        drone.on_connection = self.paths_list[
+                            drone.path[self.turn + 1] + drone.actual_location]
+                        drone.sprite.center_x = drone.on_connection[0].center_x
+                        drone.sprite.center_y = drone.on_connection[0].center_y
+                        if len(drone.on_connection) == 1:
+                            drone.on_connection = None
+                            drone.actual_location = drone.path[self.turn + 1]
+        if all_hubs_reached:
+            self.turn += 1
+        return super().on_update(delta_time)
+
     def on_draw(self):
         self.clear()
         self.hubs_list.draw()
-        self.paths_list.draw()
-        self.drones_list.draw()
+        for path_sprite in self.paths_list.values():
+            path_sprite.draw()
+        self.drones_list_sprite.draw()
 
     def on_key_press(self, key: int, modifier: int):
         """Called whenever a key is pressed. """
