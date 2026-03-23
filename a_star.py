@@ -56,14 +56,18 @@ def a_star_algorithm(sim: SimEngine) -> list[str]:
     # Register the "cost" or progress already made g(n)
     # for each cell visited
     path_cost: dict[tuple[str, int], int] = {(hub_start.name, 0): 0}
-    neighbors_list: list[tuple[int, str]] = []
+    neighbors_list: list[tuple[int, tuple[str, int]]] = []
     turn: int = 0
-    heappush(neighbors_list, (hub_start.weight, hub_start.name))
+    heappush(neighbors_list, (hub_start.weight, (hub_start.name, turn)))
     hashmap: dict[tuple[str, int], int] = sim.hashmap
 
     while len(neighbors_list) > 0:
+        curr_datas: tuple
         curr_hub_name: str
-        _, curr_hub_name = heappop(neighbors_list)
+        # curr_turn: int
+        _, curr_datas = heappop(neighbors_list)
+        # print('DATAS', curr_datas)
+        curr_hub_name, turn = curr_datas
         # print("curr_hub", curr_hub_name)
         curr_hub: Hub | None = hubs_dict.get(curr_hub_name)
         # print("weight:", curr_hub.weight)
@@ -97,11 +101,11 @@ def a_star_algorithm(sim: SimEngine) -> list[str]:
                         or hashmap[(curr_hub.name + neighbor.name, turn - 1)]
                         >= curr_hub.connected_with[neighbor.name]):
                     continue
-                print('neighbor arrivée', neighbor.name, '\n')
-                print('Path', path_cost, '\n')
-                print('name', curr_hub_name, '\n')
-                print('turn', turn, '\n')
-                print('voisins', neighbors_list, '\n')
+                # print('neighbor arrivée', neighbor.name, '\n')
+                # print('Path', path_cost, '\n')
+                # print('name', curr_hub_name, '\n')
+                # print('turn', turn, '\n')
+                # print('voisins', neighbors_list, '\n')
                 new_cost = path_cost[(curr_hub_name,
                                       turn - 1)] + neighbor.move_cost
                 if (neighbor.name,
@@ -109,8 +113,8 @@ def a_star_algorithm(sim: SimEngine) -> list[str]:
                             neighbor.name, turn)]:
                     path_found = True
                     path_cost[(neighbor.name, turn)] = new_cost
-                    heappush(neighbors_list,
-                             (new_cost + neighbor.weight, neighbor.name))
+                    heappush(neighbors_list, (new_cost + neighbor.weight,
+                                              (neighbor.name, turn)))
                     came_from[(neighbor.name, turn)] = (curr_hub.name,
                                                         turn - 1)
                     # I add one drone on the hub for the next turn
@@ -121,7 +125,7 @@ def a_star_algorithm(sim: SimEngine) -> list[str]:
                     # print("Path_cost", path_cost)
                     # print("neighbors_list", neighbors_list)
                     # print("Came from", came_from)
-                    print('voisins après', neighbors_list, '\n')
+                    # print('voisins après', neighbors_list, '\n')
             if not path_found:
                 hashmap[(curr_hub_name, turn)] += 1
                 came_from[(curr_hub_name, turn)] = (curr_hub_name, turn - 1)

@@ -41,7 +41,7 @@ def main() -> None:
     )
     for drone in sim_engine.list_drones:
         drone.path = a_star_algorithm(sim_engine)
-        print(drone.path)
+        # print(drone.path)
         width: int
         height: int
         width, height = arcade.get_display_size()

@@ -159,7 +159,10 @@ class View(arcade.Window):
                                                 center_x, center_y, angle_deg)
                         sprite_list.append(sprite)
 
-                    self.paths_list.update({key + hub.name: sprite_list})
+                    self.paths_list[key + hub.name] = sprite_list
+                    reversed_list: SpriteList = SpriteList()
+                    reversed_list.extend(reversed(sprite_list))
+                    self.paths_list[hub.name + key] = reversed_list
                     already_linked.append(key + hub.name)
 
     def setup(self, sim: SimEngine):
@@ -199,6 +202,9 @@ class View(arcade.Window):
                         # print(drone.actual_location + drone.path[self.turn + 1])
                         drone.on_connection = self.paths_list[
                             drone.path[self.turn + 1] + drone.actual_location]
+                        # print('drone dest', drone.path[self.turn + 1])
+                        # print('drone depart', drone.actual_location)
+                        # print(self.paths_list)
                         drone.sprite.center_x = drone.on_connection[0].center_x
                         drone.sprite.center_y = drone.on_connection[0].center_y
                         if len(drone.on_connection) == 1:
