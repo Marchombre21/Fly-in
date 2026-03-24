@@ -15,12 +15,26 @@ from arcade import SpriteList
 
 
 class Drone():
-    def __init__(self):
+    def __init__(self, id):
         self.__path: list[str] = []
         self.__finish: bool = False
         self.__actual_location: str
         self.__on_connection: SpriteList | None = None
-        # self.__sprite: Sprite
+        self.__two_turns: bool = False
+        self.__sprite: Sprite
+        self.__id: str = 'D' + str(id + 1)
+
+    @property
+    def id(self) -> str:
+        return self.__id
+
+    @property
+    def two_turns(self) -> bool:
+        return self.__two_turns
+
+    @two_turns.setter
+    def two_turns(self, new: bool) -> None:
+        self.__two_turns = new
 
     @property
     def actual_location(self) -> str:

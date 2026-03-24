@@ -20,6 +20,7 @@ from arcade.shape_list import ShapeElementList, create_rectangle_filled
 from simulation_engine import SimEngine
 from hub_class import Hub
 from drone import Drone
+from pyglet.graphics import Batch
 
 
 class View(arcade.Window):
@@ -41,35 +42,32 @@ class View(arcade.Window):
         self.hubs_list: ShapeElementList = ShapeElementList()
         self.offset_x: int = 5
         self.offset_y: int = 5
-        self.hub_width: int = 0
-        self.hub_height: int = 0
-        self.scaling: float = 0
         self.turn: int = 0
         self.drones_list: list[Drone]
         self.dict_hubs: dict[str, Hub]
-        self.hashmap: dict[str, int]
+        self.hashmap: dict[tuple[str, int], list[Drone]]
         self.pause: bool = True
+        self.batch: Batch = Batch()
 
     def init_drones(self, sim: SimEngine):
 
-        cell_height: float = self.hub_height / sim.nb_drones
         start_hub: Hub = [
             hub for hub in sim.hubs.values() if hub.role == 'start_hub'
         ][0]
+        cell_height: float = start_hub.height / sim.nb_drones
 
         # To have the scale value I use the formula: scale = target size /
         # original size.
-        self.scaling: float = (cell_height *
-                               0.8) / self.drones_texture_mh.height
+        scaling: float = (cell_height * 0.8) / self.drones_texture_mh.height
         for i in range(sim.nb_drones):
-            sprite: Sprite = Sprite(self.drones_texture_mh, scale=self.scaling)
+            sprite: Sprite = Sprite(self.drones_texture_mh, scale=scaling)
             sprite.center_x = (start_hub.x *
-                               self.hub_width) + self.hub_width / 4
-            sprite.center_y = (start_hub.y * self.hub_height) + (
+                               start_hub.width) + start_hub.width / 4
+            sprite.center_y = (start_hub.y * start_hub.height) + (
                 cell_height / 2) + (i * cell_height)
             # for n in range(sim.nb_drones):
             #     sprite: Sprite = Sprite(self.drones_texture_mh,
-            #                             scale=self.scaling,
+            #                             scale=scaling,
             #                             angle=270)
             #     sprite.center_x = self.hub_width / 4
             #     sprite.center_y = (cell_height / 2) + (n * cell_height)
@@ -80,16 +78,17 @@ class View(arcade.Window):
 
         nb_col = max([hub.x for hub in hub_dict.values()]) + 1
         nb_raw = max([hub.y for hub in hub_dict.values()]) + 1
-        self.hub_width = self.width / nb_col
-        self.hub_height = self.height / nb_raw
+        hub_width: int = self.width / nb_col
+        hub_height: int = self.height / nb_raw
         for hub in hub_dict.values():
+            hub.width = hub_width
+            hub.height = hub_height
             color_name: Color = color.BLACK if not hub.color else get_color(
                 hub.color)
-            x: int = self.hub_width / 2 + (hub.x * self.hub_width)
-            y: int = self.hub_height / 2 + (hub.y * self.hub_height)
-            hub_rect = create_rectangle_filled(x, y,
-                                               self.hub_width - self.offset_x,
-                                               self.hub_height - self.offset_y,
+            x: int = hub_width / 2 + (hub.x * hub_width)
+            y: int = hub_height / 2 + (hub.y * hub_height)
+            hub_rect = create_rectangle_filled(x, y, hub_width - self.offset_x,
+                                               hub_height - self.offset_y,
                                                color_name)
             self.hubs_list.append(hub_rect)
 
@@ -109,14 +108,12 @@ class View(arcade.Window):
 
                     # I define the starting points and ending points of the
                     # path
-                    start_x: float = (hub.x + 0.5) * self.hub_width + (
+                    start_x: float = (hub.x + 0.5) * hub.width + (
                         self.offset_x / 2)
-                    start_y: float = (hub.y + 0.5) * self.hub_height + (
+                    start_y: float = (hub.y + 0.5) * hub.height + (
                         self.offset_y / 2)
-                    end_x: float = (x + 0.5) * self.hub_width + (
-                        self.offset_x / 2)
-                    end_y: float = (y + 0.5) * self.hub_height + (
-                        self.offset_y / 2)
+                    end_x: float = (x + 0.5) * hub.width + (self.offset_x / 2)
+                    end_y: float = (y + 0.5) * hub.height + (self.offset_y / 2)
 
                     distance: float = arcade.math.get_distance(
                         start_x, start_y, end_x, end_y)
@@ -130,8 +127,8 @@ class View(arcade.Window):
 
                     # If one path must cross over another path I add an offset
                     path_offset: float = 0.0
-                    if (int(distance) > int(self.hub_width) and angle_deg
-                            == 0) or (int(distance) > int(self.hub_height)
+                    if (int(distance) > int(hub.width) and angle_deg
+                            == 0) or (int(distance) > int(hub.height)
                                       and angle_deg == 90):
                         # print(hub.name, distance, self.hub_width, angle_deg)
                         path_offset = text_width * 1.5
@@ -177,66 +174,91 @@ class View(arcade.Window):
         self.init_drones(sim)
         self.init_paths(sim.hubs)
 
+    def landing(self, drone: Drone):
+        hub: Hub = self.dict_hubs[drone.path[self.turn + 1]]
+        drone.sprite.center_x = (hub.x + 0.5) * hub.width
+        drone.sprite.center_y = (hub.y + 0.5) * hub.height
+        drone.on_connection = None
+        drone.actual_location = drone.path[self.turn + 1]
+
+    def on_the_road(self, drone: Drone):
+        for i, sprite in enumerate(drone.on_connection):
+            if sprite.center_x == drone.sprite.center_x and sprite.center_y ==\
+                    drone.sprite.center_y:
+                if drone.two_turns and i >= len(drone.on_connection) / 2:
+                    drone.actual_location = drone.path[self.turn + 1]
+                    drone.two_turns = False
+                else:
+                    drone.sprite.center_x =\
+                        drone.on_connection[i + 1].center_x
+                    drone.sprite.center_y =\
+                        drone.on_connection[i + 1].center_y
+                    if i + 1 == len(drone.on_connection) - 1:
+                        # print(drone.actual_location)
+                        # print(drone.path[self.turn + 1])
+                        self.landing(drone)
+                        if self.dict_hubs[drone.path[self.turn +
+                                                     1]].role == 'end_hub':
+                            drone.finish = True
+                break
+
+    def takeoff(self, drone: Drone):
+        drone.on_connection = self.paths_list.get(drone.path[self.turn + 1] +
+                                                  drone.actual_location)
+        if not drone.on_connection:
+            # print('+1', drone.sprite.center_x)
+            # print(drone.path[self.turn + 1])
+            drone.two_turns = True
+            drone.on_connection = self.paths_list.get(drone.path[self.turn +
+                                                                 1])
+        if not drone.on_connection:
+            # print('-1', drone.sprite.center_x)
+            drone.two_turns = False
+            drone.on_connection = self.paths_list.get(drone.path[self.turn -
+                                                                 1])
+
+        # print('drone dest', drone.path[self.turn + 1])
+        # print('drone depart', drone.actual_location)
+        # print(self.paths_list)
+        drone.sprite.center_x = drone.on_connection[0].center_x
+        drone.sprite.center_y = drone.on_connection[0].center_y
+
+    def adjust_scale(self, drone: Drone):
+        if drone.on_connection:
+            drone.sprite.scale = drone.on_connection[
+                0].texture.height / drone.sprite.texture.height
+        else:
+            cell_height: float = self.dict_hubs[
+                drone.actual_location].height / len(
+                    self.hashmap[(drone.actual_location, self.turn + 1)])
+            drone.sprite.scale = cell_height * 0.8 /\
+                drone.sprite.texture.height
+
+    def adjust_texture(self, drone: Drone):
+        if drone.sprite.center_x <= self.width * (1 / 3):
+            drone.sprite.texture = self.drones_texture_nh
+        elif self.width * (1 / 3) < drone.sprite.center_x <= self.width * (2 /
+                                                                           3):
+            drone.sprite.texture = self.drones_texture_mh
+        else:
+            drone.sprite.texture = self.drones_texture_h
+
     def on_update(self, delta_time):
         if not self.pause:
             all_hubs_reached: bool = True
-            for i, drone in enumerate(self.drones_list):
+            for drone in self.drones_list:
                 if not drone.finish:
                     # print('actual', drone.actual_location)
-                    # print('path', drone.path)
+                    # print('path', drone.path[self.turn + 1])
                     # print('turn', self.turn)
                     if drone.actual_location != drone.path[self.turn + 1]:
                         all_hubs_reached = False
                         if drone.on_connection:
-                            for i, sprite in enumerate(drone.on_connection):
-                                if sprite.center_x == drone.sprite.center_x\
-                                    and sprite.center_y ==\
-                                    drone.sprite.center_y:
-                                    drone.sprite.center_x =\
-                                        drone.on_connection[i + 1].center_x
-                                    drone.sprite.center_y =\
-                                        drone.on_connection[i + 1].center_y
-                                    if i + 1 == len(drone.on_connection) - 1:
-                                        drone.on_connection = None
-                                        drone.actual_location = drone.path[
-                                            self.turn + 1]
-                                        if self.dict_hubs[drone.path[
-                                                self.turn +
-                                                1]].role == 'end_hub':
-                                            drone.finish = True
-                                    break
+                            self.on_the_road(drone)
                         else:
-                            # print(self.paths_list)
-                            # print(drone.actual_location + drone.path[self.turn + 1])
-                            drone.on_connection = self.paths_list[
-                                drone.path[self.turn + 1] +
-                                drone.actual_location]
-                            # print('drone dest', drone.path[self.turn + 1])
-                            # print('drone depart', drone.actual_location)
-                            # print(self.paths_list)
-                            drone.sprite.center_x = drone.on_connection[
-                                0].center_x
-                            drone.sprite.center_y = drone.on_connection[
-                                0].center_y
-                            if len(drone.on_connection) == 1:
-                                drone.on_connection = None
-                                drone.actual_location = drone.path[self.turn +
-                                                                   1]
-                if drone.on_connection:
-                    drone.sprite.scale = drone.on_connection[
-                        0].texture.height / drone.sprite.texture.height
-                else:
-                    cell_height: float = self.hub_height / self.hashmap[
-                        (drone.actual_location, self.turn + 1)]
-                    drone.sprite.scale = cell_height * 0.8 /\
-                        drone.sprite.texture.height
-                if drone.sprite.center_x <= self.width * (1 / 3):
-                    drone.sprite.texture = self.drones_texture_nh
-                elif self.width * (
-                        1 / 3) < drone.sprite.center_x <= self.width * (2 / 3):
-                    drone.sprite.texture = self.drones_texture_mh
-                else:
-                    drone.sprite.texture = self.drones_texture_h
+                            self.takeoff(drone)
+                    self.adjust_scale(drone)
+                self.adjust_texture(drone)
             if all_hubs_reached:
                 self.turn += 1
         return super().on_update(delta_time)

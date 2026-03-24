@@ -20,6 +20,7 @@ from pydantic_core import PydanticCustomError
 from simulation_engine import SimEngine
 from image import View
 from dijkstra import dijkstra
+from log_maker import LogMaker
 
 
 def main() -> None:
@@ -35,14 +36,19 @@ def main() -> None:
     sim_engine.add_drones()
     dijkstra(
         sim_engine.hubs,
-        [hub.name for hub in sim_engine.hubs.values() if hub.role == "end_hub"][0],
+        [
+            hub.name for hub in sim_engine.hubs.values()
+            if hub.role == "end_hub"
+        ][0],
     )
     for drone in sim_engine.list_drones:
-        drone.path = a_star_algorithm(sim_engine)
+        drone.path = a_star_algorithm(sim_engine, drone)
         # print(drone.path)
-        width: int
-        height: int
-        width, height = arcade.get_display_size()
+    width: int
+    height: int
+    width, height = arcade.get_display_size()
+    log_maker: LogMaker = LogMaker(sim_engine.list_drones)
+    log_maker.make_log()
     view: View = View(width / 2, height / 2, "Fly-in")
     view.setup(sim_engine)
     arcade.run()
@@ -51,11 +57,11 @@ def main() -> None:
 
 if __name__ == "__main__":
     # try:
-        main()
-    # except Exception as e:
-    #     print(e)
-    # except (PydanticCustomError, ValidationError) as e:
-    #     for error in e.errors():
-    #         print(
-    #             f"{error.get('loc')[0]}: {error.get('input')}\n" f"{error.get('msg')}"
-    #         )
+    main()
+# except Exception as e:
+#     print(e)
+# except (PydanticCustomError, ValidationError) as e:
+#     for error in e.errors():
+#         print(
+#             f"{error.get('loc')[0]}: {error.get('input')}\n" f"{error.get('msg')}"
+#         )

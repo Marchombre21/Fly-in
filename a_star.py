@@ -12,6 +12,7 @@
 from heapq import heappop, heappush
 from hub_class import Hub
 from simulation_engine import SimEngine
+from drone import Drone
 
 
 def reconstruct_path(node: str, came_from: dict[str, str]) -> list[str]:
@@ -31,7 +32,7 @@ def reconstruct_path(node: str, came_from: dict[str, str]) -> list[str]:
     return path
 
 
-def a_star_algorithm(sim: SimEngine) -> list[str]:
+def a_star_algorithm(sim: SimEngine, drone: Drone) -> list[str]:
     """
     The A* algorithm assign a cost to each cell and calculate the shortest
     SolutionPath from this
@@ -59,16 +60,18 @@ def a_star_algorithm(sim: SimEngine) -> list[str]:
     neighbors_list: list[tuple[int, tuple[str, int]]] = []
     turn: int = 0
     heappush(neighbors_list, (hub_start.weight, (hub_start.name, turn)))
-    hashmap: dict[tuple[str, int], int] = sim.hashmap
+    hashmap: dict[tuple[str, int], list[Drone]] = sim.hashmap
 
     while len(neighbors_list) > 0:
         curr_datas: tuple
         curr_hub_name: str
         # curr_turn: int
+        # print(neighbors_list)
         _, curr_datas = heappop(neighbors_list)
         # print('DATAS', curr_datas)
         curr_hub_name, turn = curr_datas
         # print("curr_hub", curr_hub_name)
+        # print(turn)
         curr_hub: Hub | None = hubs_dict.get(curr_hub_name)
         # print("weight:", curr_hub.weight)
         if curr_hub.zone == "blocked":
@@ -81,14 +84,12 @@ def a_star_algorithm(sim: SimEngine) -> list[str]:
             hubs_dict[names] for names in curr_hub.connected_with
             if (names, turn - 1) not in path_cost
         ]
-
         # Check all possible neighbors of the current cell
         # and register new ones
-        path_found: bool = False
+        path_found: bool = True if len(neighbors) == 0 else False
         while not path_found:
-            turn += 1
             for neighbor in neighbors:
-                # print("neighbors", neighbor.name)
+                mc: int = neighbor.move_cost
                 # print('neighbor', neighbor.name)
                 # print('nb', hashmap[(neighbor.name, turn)])
                 # print('max drones', neighbor.max_drones)
@@ -96,10 +97,18 @@ def a_star_algorithm(sim: SimEngine) -> list[str]:
                 #       hashmap[(curr_hub.name + neighbor.name, turn - 1)])
                 # print('lien autorisés', curr_hub.connected_with[neighbor.name])
                 # print(path_cost)
-                # print(hashmap)
-                if (hashmap[(neighbor.name, turn)] >= neighbor.max_drones
-                        or hashmap[(curr_hub.name + neighbor.name, turn - 1)]
-                        >= curr_hub.connected_with[neighbor.name]):
+                # print('nb', hashmap[(neighbor.name, turn + mc)])
+                # print('max', neighbor.max_drones)
+                # print('nb connexion', hashmap[(curr_hub.name + neighbor.name, turn)])
+                # print('nb max', curr_hub.connected_with[neighbor.name])
+                # print('mc', mc)
+                # print('connexion + 1', hashmap[(curr_hub.name + neighbor.name, turn + 1)])
+                if (len(hashmap[(neighbor.name, turn + mc)]) >= neighbor.max_drones
+                        or len(hashmap[(curr_hub.name + '-' + neighbor.name, turn)])
+                        >= curr_hub.connected_with[neighbor.name]) or\
+                        (mc > 1 and len(hashmap[(curr_hub.name + '-' + neighbor.name,
+                                        turn + 1)]) >=
+                            curr_hub.connected_with[neighbor.name]):
                     continue
                 # print('neighbor arrivée', neighbor.name, '\n')
                 # print('Path', path_cost, '\n')
@@ -107,28 +116,37 @@ def a_star_algorithm(sim: SimEngine) -> list[str]:
                 # print('turn', turn, '\n')
                 # print('voisins', neighbors_list, '\n')
                 new_cost = path_cost[(curr_hub_name,
-                                      turn - 1)] + neighbor.move_cost
+                                      turn)] + neighbor.move_cost
                 if (neighbor.name,
-                        turn) not in path_cost or new_cost < path_cost[(
-                            neighbor.name, turn)]:
+                        turn + mc) not in path_cost or new_cost < path_cost[(
+                            neighbor.name, turn + mc)]:
                     path_found = True
-                    path_cost[(neighbor.name, turn)] = new_cost
+                    path_cost[(neighbor.name, turn + mc)] = new_cost
                     heappush(neighbors_list, (new_cost + neighbor.weight,
-                                              (neighbor.name, turn)))
-                    came_from[(neighbor.name, turn)] = (curr_hub.name,
-                                                        turn - 1)
+                                              (neighbor.name, turn + mc)))
+                    if mc == 2:
+                        came_from[(curr_hub_name + neighbor.name,
+                                   turn + 1)] = (curr_hub.name, turn)
+                        came_from[(neighbor.name, turn +
+                                   mc)] = (curr_hub_name + neighbor.name,
+                                           turn + 1)
+                    else:
+                        came_from[(neighbor.name, turn + mc)] = (curr_hub.name,
+                                                                 turn)
                     # I add one drone on the hub for the next turn
-                    hashmap[(neighbor.name, turn)] += 1
+                    hashmap[(neighbor.name, turn + mc)].append(drone)
                     # I add one drone on the connection between the hubs for
                     # this turn
-                    hashmap[(curr_hub.name + neighbor.name, turn - 1)] += 1
+                    hashmap[(curr_hub.name + '-' + neighbor.name,
+                             turn)].append(drone)
                     # print("Path_cost", path_cost)
                     # print("neighbors_list", neighbors_list)
                     # print("Came from", came_from)
                     # print('voisins après', neighbors_list, '\n')
             if not path_found:
-                hashmap[(curr_hub_name, turn)] += 1
-                came_from[(curr_hub_name, turn)] = (curr_hub_name, turn - 1)
-                path_cost[(curr_hub_name, turn)] = path_cost[(curr_hub_name,
-                                                              turn - 1)]
+                hashmap[(curr_hub_name, turn + 1)].append(drone)
+                came_from[(curr_hub_name, turn + 1)] = (curr_hub_name, turn)
+                path_cost[(curr_hub_name,
+                           turn + 1)] = path_cost[(curr_hub_name, turn)]
+                turn += 1
     # raise NoSolutionError("No solution for this maze!")
