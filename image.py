@@ -28,8 +28,12 @@ class View(arcade.Window):
         super().__init__(width, height, title)
         self.set_update_rate(0.2)
         self.background_color: Color = color.BLACK
-        self.drones_texture: Texture = arcade.load_texture(
+        self.drones_texture_mh: Texture = arcade.load_texture(
             "my_face/mi_content-removebg-preview.png")
+        self.drones_texture_h: Texture = arcade.load_texture(
+            "my_face/content-removebg-preview.png")
+        self.drones_texture_nh: Texture = arcade.load_texture(
+            "my_face/pas_content-removebg-preview.png")
         self.path_texture: Texture = arcade.load_texture(
             ":resources:images/topdown_tanks/tileGrass_roadEast.png")
         self.drones_list_sprite: SpriteList = SpriteList()
@@ -43,6 +47,7 @@ class View(arcade.Window):
         self.turn: int = 0
         self.drones_list: list[Drone]
         self.dict_hubs: dict[str, Hub]
+        self.hashmap: dict[str, int]
 
     def init_drones(self, sim: SimEngine):
 
@@ -53,15 +58,16 @@ class View(arcade.Window):
 
         # To have the scale value I use the formula: scale = target size /
         # original size.
-        self.scaling: float = (cell_height * 0.8) / self.drones_texture.height
+        self.scaling: float = (cell_height *
+                               0.8) / self.drones_texture_mh.height
         for i in range(sim.nb_drones):
-            sprite: Sprite = Sprite(self.drones_texture, scale=self.scaling)
+            sprite: Sprite = Sprite(self.drones_texture_mh, scale=self.scaling)
             sprite.center_x = (start_hub.x *
                                self.hub_width) + self.hub_width / 4
             sprite.center_y = (start_hub.y * self.hub_height) + (
                 cell_height / 2) + (i * cell_height)
             # for n in range(sim.nb_drones):
-            #     sprite: Sprite = Sprite(self.drones_texture,
+            #     sprite: Sprite = Sprite(self.drones_texture_mh,
             #                             scale=self.scaling,
             #                             angle=270)
             #     sprite.center_x = self.hub_width / 4
@@ -102,9 +108,6 @@ class View(arcade.Window):
 
                     # I define the starting points and ending points of the
                     # path
-                    # Je suis en train de réfléchir pour changer le display du path
-                    # pour qu'il commence plutôt sur le bord du hub et plus au centre.
-                    # Pareil pour l'arrivée
                     start_x: float = (hub.x + 0.5) * self.hub_width + (
                         self.offset_x / 2)
                     start_y: float = (hub.y + 0.5) * self.hub_height + (
@@ -167,6 +170,7 @@ class View(arcade.Window):
 
     def setup(self, sim: SimEngine):
         self.drones_list = sim.list_drones
+        self.hashmap = sim.hashmap
         self.dict_hubs = sim.hubs
         self.init_hubs(sim.hubs)
         self.init_drones(sim)
@@ -210,6 +214,21 @@ class View(arcade.Window):
                         if len(drone.on_connection) == 1:
                             drone.on_connection = None
                             drone.actual_location = drone.path[self.turn + 1]
+            if drone.on_connection:
+                drone.sprite.scale = drone.on_connection[
+                    0].texture.height / drone.sprite.texture.height
+            else:
+                cell_height: float = self.hub_height / self.hashmap[
+                    (drone.actual_location, self.turn + 1)]
+                drone.sprite.scale = cell_height * 0.8 /\
+                    drone.sprite.texture.height
+            if drone.sprite.center_x <= self.width * (1 / 3):
+                drone.sprite.texture = self.drones_texture_nh
+            elif self.width * (
+                    1 / 3) < drone.sprite.center_x <= self.width * (2 / 3):
+                drone.sprite.texture = self.drones_texture_mh
+            else:
+                drone.sprite.texture = self.drones_texture_h
         if all_hubs_reached:
             self.turn += 1
         return super().on_update(delta_time)

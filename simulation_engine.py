@@ -19,8 +19,7 @@ from errors import (SimError, FormatConnectionError, ConfigError,
 
 class SimEngine():
 
-    def __init__(self, accept: bool):
-        self.__accept = accept
+    def __init__(self):
         self.__hubs: dict[str, Hub] = {}
         self.__nb_drones: int = 0
         self.__hashmap: dict[tuple[str, int], int] = defaultdict(int)
@@ -48,8 +47,6 @@ class SimEngine():
     def check_coordonates(self):
         min_x: int = min([hub.x for hub in self.__hubs.values()])
         min_y: int = min([hub.y for hub in self.__hubs.values()])
-        if (min_y < 0 or min_x < 0) and not self.__accept:
-            raise ConfigError('Coordonates can\'t be negative integers')
         if min_x < 0:
             offset: int = abs(min_x)
             for hub in self.hubs.values():

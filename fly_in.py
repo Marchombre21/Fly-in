@@ -28,10 +28,8 @@ def main() -> None:
         raise ArgError("Too much arguments!")
 
     path_map: str = input("Which map? : ")
-    accept_negative: str = input("\nAccept negative coordinates? (y/n) : ")
-    accept_negative = True if accept_negative == "y" else False
 
-    sim_engine: SimEngine = SimEngine(accept_negative)
+    sim_engine: SimEngine = SimEngine()
     parsing(sim_engine, path_map)
     sim_engine.check_coordonates()
     sim_engine.add_drones()
