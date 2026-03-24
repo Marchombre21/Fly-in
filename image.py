@@ -48,6 +48,7 @@ class View(arcade.Window):
         self.drones_list: list[Drone]
         self.dict_hubs: dict[str, Hub]
         self.hashmap: dict[str, int]
+        self.pause: bool = True
 
     def init_drones(self, sim: SimEngine):
 
@@ -177,60 +178,67 @@ class View(arcade.Window):
         self.init_paths(sim.hubs)
 
     def on_update(self, delta_time):
-        all_hubs_reached: bool = True
-        for i, drone in enumerate(self.drones_list):
-            if not drone.finish:
-                # print('actual', drone.actual_location)
-                # print('path', drone.path)
-                # print('turn', self.turn)
-                if drone.actual_location != drone.path[self.turn + 1]:
-                    all_hubs_reached = False
-                    if drone.on_connection:
-                        for i, sprite in enumerate(drone.on_connection):
-                            if sprite.center_x == drone.sprite.center_x and\
-                                    sprite.center_y == drone.sprite.center_y:
-                                drone.sprite.center_x = drone.on_connection[
-                                    i + 1].center_x
-                                drone.sprite.center_y = drone.on_connection[
-                                    i + 1].center_y
-                                if i + 1 == len(drone.on_connection) - 1:
-                                    drone.on_connection = None
-                                    drone.actual_location = drone.path[
-                                        self.turn + 1]
-                                    if self.dict_hubs[drone.path[
-                                            self.turn + 1]].role == 'end_hub':
-                                        drone.finish = True
-                                break
-                    else:
-                        # print(self.paths_list)
-                        # print(drone.actual_location + drone.path[self.turn + 1])
-                        drone.on_connection = self.paths_list[
-                            drone.path[self.turn + 1] + drone.actual_location]
-                        # print('drone dest', drone.path[self.turn + 1])
-                        # print('drone depart', drone.actual_location)
-                        # print(self.paths_list)
-                        drone.sprite.center_x = drone.on_connection[0].center_x
-                        drone.sprite.center_y = drone.on_connection[0].center_y
-                        if len(drone.on_connection) == 1:
-                            drone.on_connection = None
-                            drone.actual_location = drone.path[self.turn + 1]
-            if drone.on_connection:
-                drone.sprite.scale = drone.on_connection[
-                    0].texture.height / drone.sprite.texture.height
-            else:
-                cell_height: float = self.hub_height / self.hashmap[
-                    (drone.actual_location, self.turn + 1)]
-                drone.sprite.scale = cell_height * 0.8 /\
-                    drone.sprite.texture.height
-            if drone.sprite.center_x <= self.width * (1 / 3):
-                drone.sprite.texture = self.drones_texture_nh
-            elif self.width * (
-                    1 / 3) < drone.sprite.center_x <= self.width * (2 / 3):
-                drone.sprite.texture = self.drones_texture_mh
-            else:
-                drone.sprite.texture = self.drones_texture_h
-        if all_hubs_reached:
-            self.turn += 1
+        if not self.pause:
+            all_hubs_reached: bool = True
+            for i, drone in enumerate(self.drones_list):
+                if not drone.finish:
+                    # print('actual', drone.actual_location)
+                    # print('path', drone.path)
+                    # print('turn', self.turn)
+                    if drone.actual_location != drone.path[self.turn + 1]:
+                        all_hubs_reached = False
+                        if drone.on_connection:
+                            for i, sprite in enumerate(drone.on_connection):
+                                if sprite.center_x == drone.sprite.center_x\
+                                    and sprite.center_y ==\
+                                    drone.sprite.center_y:
+                                    drone.sprite.center_x =\
+                                        drone.on_connection[i + 1].center_x
+                                    drone.sprite.center_y =\
+                                        drone.on_connection[i + 1].center_y
+                                    if i + 1 == len(drone.on_connection) - 1:
+                                        drone.on_connection = None
+                                        drone.actual_location = drone.path[
+                                            self.turn + 1]
+                                        if self.dict_hubs[drone.path[
+                                                self.turn +
+                                                1]].role == 'end_hub':
+                                            drone.finish = True
+                                    break
+                        else:
+                            # print(self.paths_list)
+                            # print(drone.actual_location + drone.path[self.turn + 1])
+                            drone.on_connection = self.paths_list[
+                                drone.path[self.turn + 1] +
+                                drone.actual_location]
+                            # print('drone dest', drone.path[self.turn + 1])
+                            # print('drone depart', drone.actual_location)
+                            # print(self.paths_list)
+                            drone.sprite.center_x = drone.on_connection[
+                                0].center_x
+                            drone.sprite.center_y = drone.on_connection[
+                                0].center_y
+                            if len(drone.on_connection) == 1:
+                                drone.on_connection = None
+                                drone.actual_location = drone.path[self.turn +
+                                                                   1]
+                if drone.on_connection:
+                    drone.sprite.scale = drone.on_connection[
+                        0].texture.height / drone.sprite.texture.height
+                else:
+                    cell_height: float = self.hub_height / self.hashmap[
+                        (drone.actual_location, self.turn + 1)]
+                    drone.sprite.scale = cell_height * 0.8 /\
+                        drone.sprite.texture.height
+                if drone.sprite.center_x <= self.width * (1 / 3):
+                    drone.sprite.texture = self.drones_texture_nh
+                elif self.width * (
+                        1 / 3) < drone.sprite.center_x <= self.width * (2 / 3):
+                    drone.sprite.texture = self.drones_texture_mh
+                else:
+                    drone.sprite.texture = self.drones_texture_h
+            if all_hubs_reached:
+                self.turn += 1
         return super().on_update(delta_time)
 
     def on_draw(self):
@@ -241,7 +249,10 @@ class View(arcade.Window):
         self.drones_list_sprite.draw()
 
     def on_key_press(self, key: int, modifier: int):
-        """Called whenever a key is pressed. """
+        """Called whenever a key is pressed."""
 
         if key == arcade.key.ESCAPE:
             self.close()
+
+        if key == arcade.key.SPACE:
+            self.pause = not self.pause
