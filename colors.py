@@ -35,8 +35,12 @@ class Colors(Enum):
     WHITE = 'white'
     IVORY = 'ivory'
     CYAN = 'cyan'
+    GOLD = 'gold'
+    CRIMSON = 'crimson'
+    DARKRED = 'darkred'
+    RAINBOW = 'rainbow'
 
 
 def get_color(color_name: str) -> Color:
-    new_color: str = color_name.strip().upper()
+    new_color: str = color_name.strip().upper().replace('dark', 'dark_')
     return getattr(color, new_color, color.DARK_BLUE)

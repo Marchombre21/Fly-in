@@ -20,7 +20,6 @@ from arcade.shape_list import ShapeElementList, create_rectangle_filled
 from simulation_engine import SimEngine
 from hub_class import Hub
 from drone import Drone
-from pyglet.graphics import Batch
 
 
 class View(arcade.Window):
@@ -47,7 +46,6 @@ class View(arcade.Window):
         self.dict_hubs: dict[str, Hub]
         self.hashmap: dict[tuple[str, int], list[Drone]]
         self.pause: bool = True
-        self.batch: Batch = Batch()
 
     def init_drones(self, sim: SimEngine):
 
@@ -65,12 +63,6 @@ class View(arcade.Window):
                                start_hub.width) + start_hub.width / 4
             sprite.center_y = (start_hub.y * start_hub.height) + (
                 cell_height / 2) + (i * cell_height)
-            # for n in range(sim.nb_drones):
-            #     sprite: Sprite = Sprite(self.drones_texture_mh,
-            #                             scale=scaling,
-            #                             angle=270)
-            #     sprite.center_x = self.hub_width / 4
-            #     sprite.center_y = (cell_height / 2) + (n * cell_height)
             self.drones_list_sprite.append(sprite)
             sim.list_drones[i].sprite = sprite
 

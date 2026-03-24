@@ -57,9 +57,9 @@ def a_star_algorithm(sim: SimEngine, drone: Drone) -> list[str]:
     # Register the "cost" or progress already made g(n)
     # for each cell visited
     path_cost: dict[tuple[str, int], int] = {(hub_start.name, 0): 0}
-    neighbors_list: list[tuple[int, tuple[str, int]]] = []
+    neighbors_list: list[tuple[int, int, tuple[str, int]]] = []
     turn: int = 0
-    heappush(neighbors_list, (hub_start.weight, (hub_start.name, turn)))
+    heappush(neighbors_list, (hub_start.weight, 0, (hub_start.name, turn)))
     hashmap: dict[tuple[str, int], list[Drone]] = sim.hashmap
 
     while len(neighbors_list) > 0:
@@ -67,7 +67,7 @@ def a_star_algorithm(sim: SimEngine, drone: Drone) -> list[str]:
         curr_hub_name: str
         # curr_turn: int
         # print(neighbors_list)
-        _, curr_datas = heappop(neighbors_list)
+        _, _, curr_datas = heappop(neighbors_list)
         # print('DATAS', curr_datas)
         curr_hub_name, turn = curr_datas
         # print("curr_hub", curr_hub_name)
@@ -120,10 +120,12 @@ def a_star_algorithm(sim: SimEngine, drone: Drone) -> list[str]:
                 if (neighbor.name,
                         turn + mc) not in path_cost or new_cost < path_cost[(
                             neighbor.name, turn + mc)]:
+                    debuff: int = 0 if neighbor.zone == 'priority' else 1
                     path_found = True
                     path_cost[(neighbor.name, turn + mc)] = new_cost
-                    heappush(neighbors_list, (new_cost + neighbor.weight,
-                                              (neighbor.name, turn + mc)))
+                    heappush(neighbors_list,
+                             (new_cost + neighbor.weight, debuff,
+                              (neighbor.name, turn + mc)))
                     if mc == 2:
                         came_from[(curr_hub_name + neighbor.name,
                                    turn + 1)] = (curr_hub.name, turn)
