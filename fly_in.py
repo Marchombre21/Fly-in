@@ -12,7 +12,7 @@
 
 import sys
 import arcade
-from a_star import a_star_algorithm
+from a_star import PathFinder
 from errors import ArgError
 from parsing import parsing
 from pydantic import ValidationError
@@ -41,15 +41,16 @@ def main() -> None:
             if hub.role == "end_hub"
         ][0],
     )
+    pathfinder: PathFinder = PathFinder(sim_engine.hubs, sim_engine.hashmap)
     for drone in sim_engine.list_drones:
-        drone.path = a_star_algorithm(sim_engine, drone)
+        drone.path = pathfinder.a_star_algorithm(drone)
         # print(drone.path)
     width: int
     height: int
     width, height = arcade.get_display_size()
     log_maker: LogMaker = LogMaker(sim_engine.list_drones)
     log_maker.make_log()
-    view: View = View(width / 2, height / 2, "Fly-in")
+    view: View = View(width * (4/5), height * (4/5), "Fly-in")
     view.setup(sim_engine)
     arcade.run()
     # print([hub.weight for hub in sim_engine.hubs.values()])
