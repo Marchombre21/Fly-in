@@ -12,11 +12,12 @@
 
 import arcade
 import math
+from arcade import draw_circle_filled, draw_circle_outline
 from colors import get_color
 from arcade.types import Color
 from arcade.texture import Texture
 from arcade import Sprite, SpriteList, color
-from arcade.shape_list import ShapeElementList, create_rectangle_filled
+from arcade.shape_list import create_line, Shape
 from simulation_engine import SimEngine
 from hub_class import Hub
 from drone import Drone
@@ -26,19 +27,21 @@ class View(arcade.Window):
 
     def __init__(self, width: int, height: int, title: str):
         super().__init__(width, height, title)
-        self.set_update_rate(0.2)
+        # self.set_update_rate(0.2)
         self.background_color: Color = color.BLACK
+        self.background: Texture = arcade.load_texture(
+            ':resources:images/backgrounds/stars.png')
         self.drones_texture_mh: Texture = arcade.load_texture(
             "my_face/mi_content-removebg-preview.png")
         self.drones_texture_h: Texture = arcade.load_texture(
             "my_face/content-removebg-preview.png")
         self.drones_texture_nh: Texture = arcade.load_texture(
             "my_face/pas_content-removebg-preview.png")
-        self.path_texture: Texture = arcade.load_texture(
-            ":resources:images/topdown_tanks/tileGrass_roadEast.png")
+        # self.path_texture: Texture = arcade.load_texture(
+        #     ":resources:images/topdown_tanks/tileGrass_roadEast.png")
         self.drones_list_sprite: SpriteList = SpriteList()
-        self.paths_list: dict[str, SpriteList] = {}
-        self.hubs_list: ShapeElementList = ShapeElementList()
+        self.paths_list: list[Shape] = []
+        self.path_points: dict[str, list[tuple[float, float]]] = {}
         self.offset_x: int = 5
         self.offset_y: int = 5
         self.turn: int = 0
@@ -52,17 +55,19 @@ class View(arcade.Window):
         start_hub: Hub = [
             hub for hub in sim.hubs.values() if hub.role == 'start_hub'
         ][0]
-        cell_height: float = start_hub.height / sim.nb_drones
+        # cell_height: float = start_hub.height / sim.nb_drones
 
         # To have the scale value I use the formula: scale = target size /
         # original size.
-        scaling: float = (cell_height * 0.8) / self.drones_texture_mh.height
+        scaling: float = (start_hub.width * 0.8) / self.drones_texture_nh.width
         for i in range(sim.nb_drones):
-            sprite: Sprite = Sprite(self.drones_texture_mh, scale=scaling)
-            sprite.center_x = (start_hub.x *
-                               start_hub.width) + start_hub.width / 4
-            sprite.center_y = (start_hub.y * start_hub.height) + (
-                cell_height / 2) + (i * cell_height)
+            sprite: Sprite = Sprite(self.drones_texture_nh, scale=scaling)
+            # sprite.center_x = (start_hub.x *
+            #                    start_hub.width) + start_hub.width / 4
+            # sprite.center_y = (start_hub.y * start_hub.height) + (
+            # cell_height / 2) + (i * cell_height)
+            sprite.center_x = (start_hub.x + 0.5) * start_hub.width
+            sprite.center_y = (start_hub.y + 0.5) * start_hub.height
             self.drones_list_sprite.append(sprite)
             sim.list_drones[i].sprite = sprite
 
@@ -79,10 +84,34 @@ class View(arcade.Window):
                 hub.color)
             x: int = hub_width / 2 + (hub.x * hub_width)
             y: int = hub_height / 2 + (hub.y * hub_height)
-            hub_rect = create_rectangle_filled(x, y, hub_width - self.offset_x,
-                                               hub_height - self.offset_y,
-                                               color_name)
-            self.hubs_list.append(hub_rect)
+            draw_circle_filled(x, y, float((hub_width - self.offset_x) / 2),
+                               color_name)
+            if color_name == color.BLACK:
+                draw_circle_outline(x, y,
+                                    float((hub_width - self.offset_x) / 2) + 1,
+                                    color.WHITE)
+
+    @staticmethod
+    def make_path_points(start_x: float, start_y: float, end_x: float,
+                         end_y: float) -> list[tuple[float, float]]:
+        step_size: float = 5
+        distance: float = arcade.math.get_distance(start_x, start_y, end_x,
+                                                   end_y)
+        if distance == 0:
+            return [(start_x, start_y)]
+        num_steps: int = int(distance / step_size)
+        points: list[tuple[float, float]] = []
+
+        for i in range(num_steps + 1):
+            progress: float = i / num_steps
+            curr_x: float = start_x + progress * (end_x - start_x)
+            curr_y: float = start_y + progress * (end_y - start_y)
+            points.append((curr_x, curr_y))
+
+        if points[-1] != (end_x, end_y):
+            points.append((end_x, end_y))
+
+        return points
 
     def init_paths(self, hubs_dict: dict[str, Hub]):
         already_linked: list[str] = []
@@ -92,7 +121,7 @@ class View(arcade.Window):
                 # I check if the connection has already been established.
                 if hub.name + key not in already_linked:
 
-                    text_width: int = self.path_texture.width
+                    # text_width: int = self.path_texture.width
 
                     x: int
                     y: int
@@ -106,6 +135,17 @@ class View(arcade.Window):
                         self.offset_y / 2)
                     end_x: float = (x + 0.5) * hub.width + (self.offset_x / 2)
                     end_y: float = (y + 0.5) * hub.height + (self.offset_y / 2)
+                    dx: float = end_x - start_x
+                    dy: float = end_y - start_y
+                    distance: float = math.hypot(dx, dy)
+
+                    if distance > 0:
+                        dir_x: float = dx / distance
+                        dir_y: float = dy / distance
+
+                        recul: float = 15.0
+                        end_x -= dir_x * recul
+                        end_y -= dir_y * recul
 
                     distance: float = arcade.math.get_distance(
                         start_x, start_y, end_x, end_y)
@@ -122,8 +162,7 @@ class View(arcade.Window):
                     if (int(distance) > int(hub.width) and angle_deg
                             == 0) or (int(distance) > int(hub.height)
                                       and angle_deg == 90):
-                        # print(hub.name, distance, self.hub_width, angle_deg)
-                        path_offset = text_width * 1.5
+                        path_offset = 30.0 * 1.5
 
                     # The offset is calculated by multiplying the size of a
                     # sprite by the new angle to which I added 90 degrees using
@@ -135,27 +174,17 @@ class View(arcade.Window):
 
                     start_x += new_offset_x
                     start_y += new_offset_y
+                    end_x += new_offset_x
+                    end_y += new_offset_y
 
-                    num_sprites: int = int(distance / text_width)
+                    self.paths_list.append(
+                        create_line(start_x, start_y, end_x, end_y,
+                                    color.WHITE_SMOKE, 3))
 
-                    sprite_list: SpriteList = SpriteList()
-                    for i in range(num_sprites):
-                        current_distance: float = (i * text_width) + (
-                            text_width / 2)
-
-                        center_x: float = start_x + (math.cos(angle_rad) *
-                                                     current_distance)
-                        center_y: float = start_y - (math.sin(angle_rad) *
-                                                     current_distance)
-
-                        sprite: Sprite = Sprite(self.path_texture, 1.0,
-                                                center_x, center_y, angle_deg)
-                        sprite_list.append(sprite)
-
-                    self.paths_list[key + hub.name] = sprite_list
-                    reversed_list: SpriteList = SpriteList()
-                    reversed_list.extend(reversed(sprite_list))
-                    self.paths_list[hub.name + key] = reversed_list
+                    self.path_points[hub.name + key] = self.make_path_points(
+                        start_x, start_y, end_x, end_y)
+                    self.path_points[key + hub.name] = self.make_path_points(
+                        end_x, end_y, start_x, start_y)
                     already_linked.append(key + hub.name)
 
     def setup(self, sim: SimEngine):
@@ -174,57 +203,47 @@ class View(arcade.Window):
         drone.actual_location = drone.path[self.turn + 1]
 
     def on_the_road(self, drone: Drone):
-        for i, sprite in enumerate(drone.on_connection):
-            if sprite.center_x == drone.sprite.center_x and sprite.center_y ==\
-                    drone.sprite.center_y:
-                if drone.two_turns and i >= len(drone.on_connection) / 2:
-                    drone.actual_location = drone.path[self.turn + 1]
-                    drone.two_turns = False
-                else:
-                    drone.sprite.center_x =\
-                        drone.on_connection[i + 1].center_x
-                    drone.sprite.center_y =\
-                        drone.on_connection[i + 1].center_y
-                    if i + 1 == len(drone.on_connection) - 1:
-                        # print(drone.actual_location)
-                        # print(drone.path[self.turn + 1])
-                        self.landing(drone)
-                        if self.dict_hubs[drone.path[self.turn +
-                                                     1]].role == 'end_hub':
-                            drone.finish = True
-                break
+        if drone.two_turns and drone.len_connection / 2 >= len(
+                drone.on_connection):
+            drone.actual_location = drone.path[self.turn + 1]
+            drone.two_turns = False
+        else:
+            drone.sprite.center_x, drone.sprite.center_y =\
+                drone.on_connection.pop(0)
+            if len(drone.on_connection) == 0:
+                self.landing(drone)
+                if self.dict_hubs[drone.path[self.turn + 1]].role == 'end_hub':
+                    drone.finish = True
 
     def takeoff(self, drone: Drone):
-        drone.on_connection = self.paths_list.get(drone.path[self.turn + 1] +
-                                                  drone.actual_location)
-        if not drone.on_connection:
-            # print('+1', drone.sprite.center_x)
-            # print(drone.path[self.turn + 1])
-            drone.two_turns = True
-            drone.on_connection = self.paths_list.get(drone.path[self.turn +
-                                                                 1])
-        if not drone.on_connection:
-            # print('-1', drone.sprite.center_x)
-            drone.two_turns = False
-            drone.on_connection = self.paths_list.get(drone.path[self.turn -
-                                                                 1])
 
-        # print('drone dest', drone.path[self.turn + 1])
-        # print('drone depart', drone.actual_location)
-        # print(self.paths_list)
-        drone.sprite.center_x = drone.on_connection[0].center_x
-        drone.sprite.center_y = drone.on_connection[0].center_y
+        path: list[tuple[float,
+                         float]] = self.path_points.get(drone.actual_location +
+                                                        drone.path[self.turn +
+                                                                   1])
+
+        if not path:
+            drone.two_turns = True
+            path = self.path_points.get(drone.path[self.turn + 1])
+        if not path:
+            drone.two_turns = False
+            path = self.path_points.get(drone.path[self.turn - 1])
+
+        drone.on_connection = path.copy()
+        drone.sprite.center_x, drone.sprite.center_y =\
+            drone.on_connection.pop(0)
 
     def adjust_scale(self, drone: Drone):
         if drone.on_connection:
-            drone.sprite.scale = drone.on_connection[
-                0].texture.height / drone.sprite.texture.height
-        else:
-            cell_height: float = self.dict_hubs[
-                drone.actual_location].height / len(
-                    self.hashmap[(drone.actual_location, self.turn + 1)])
-            drone.sprite.scale = cell_height * 0.8 /\
+            drone.sprite.scale = self.height * 0.1 /\
                 drone.sprite.texture.height
+        else:
+            # cell_height: float = self.dict_hubs[
+            #     drone.actual_location].height / len(
+            #         self.hashmap[(drone.actual_location, self.turn + 1)])
+            drone.sprite.scale = self.dict_hubs[
+                drone.actual_location].width * 0.8 /\
+                drone.sprite.texture.width
 
     def adjust_texture(self, drone: Drone):
         if drone.sprite.center_x <= self.width * (1 / 3):
@@ -240,9 +259,6 @@ class View(arcade.Window):
             all_hubs_reached: bool = True
             for drone in self.drones_list:
                 if not drone.finish:
-                    # print('actual', drone.actual_location)
-                    # print('path', drone.path[self.turn + 1])
-                    # print('turn', self.turn)
                     if drone.actual_location != drone.path[self.turn + 1]:
                         all_hubs_reached = False
                         if drone.on_connection:
@@ -257,9 +273,13 @@ class View(arcade.Window):
 
     def on_draw(self):
         self.clear()
-        self.hubs_list.draw()
-        for path_sprite in self.paths_list.values():
-            path_sprite.draw()
+        arcade.draw_texture_rect(
+            self.background,
+            arcade.LBWH(0, 0, self.width, self.height),
+        )
+        self.init_hubs(self.dict_hubs)
+        for path in self.paths_list:
+            path.draw()
         self.drones_list_sprite.draw()
 
     def on_key_press(self, key: int, modifier: int):

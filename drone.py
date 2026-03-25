@@ -19,14 +19,23 @@ class Drone():
         self.__path: list[str] = []
         self.__finish: bool = False
         self.__actual_location: str
-        self.__on_connection: SpriteList | None = None
+        self.__on_connection: list[tuple[float, float]] | None = None
         self.__two_turns: bool = False
+        self.__len_connection: int
         self.__sprite: Sprite
         self.__id: str = 'D' + str(id + 1)
 
     @property
     def id(self) -> str:
         return self.__id
+
+    @property
+    def len_connection(self) -> int:
+        return self.__len_connection
+
+    # @len_connection.setter
+    # def len_connection(self, new_len: int) -> None:
+    #     self.__len_connection = new_len
 
     @property
     def two_turns(self) -> bool:
@@ -58,6 +67,10 @@ class Drone():
 
     @on_connection.setter
     def on_connection(self, connection: SpriteList) -> None:
+        if connection:
+            self.__len_connection = len(connection)
+        else:
+            self.__len_connection = 0
         self.__on_connection = connection
 
     @property
