@@ -13,6 +13,7 @@ from heapq import heappop, heappush
 from hub_class import Hub
 from simulation_engine import SimEngine
 from drone import Drone
+from errors import NoPathFound
 
 
 def reconstruct_path(node: str, came_from: dict[str, str]) -> list[str]:
@@ -87,6 +88,16 @@ def a_star_algorithm(sim: SimEngine, drone: Drone) -> list[str]:
         # Check all possible neighbors of the current cell
         # and register new ones
         path_found: bool = True if len(neighbors) == 0 else False
+        # if len(neighbors) == 0:
+        #     print(curr_hub_name)
+        #     print(neighbors_list)
+        #     print(path_cost)
+        # if drone.id == 'D15':
+        #     print(came_from)
+        #     print(curr_hub_name)
+        #     print(neighbors_list)
+        #     print(neighbors)
+        # print(path_cost)
         while not path_found:
             for neighbor in neighbors:
                 mc: int = neighbor.move_cost
@@ -115,11 +126,15 @@ def a_star_algorithm(sim: SimEngine, drone: Drone) -> list[str]:
                 # print('name', curr_hub_name, '\n')
                 # print('turn', turn, '\n')
                 # print('voisins', neighbors_list, '\n')
+                # if drone.id == 'D15':
+                #     print('nei name', neighbor.name)
                 new_cost = path_cost[(curr_hub_name,
                                       turn)] + neighbor.move_cost
                 if (neighbor.name,
                         turn + mc) not in path_cost or new_cost < path_cost[(
                             neighbor.name, turn + mc)]:
+                    # if drone.id == 'D15':
+                    #     print('nei name pass', neighbor.name)
                     debuff: int = 0 if neighbor.zone == 'priority' else 1
                     path_found = True
                     path_cost[(neighbor.name, turn + mc)] = new_cost
@@ -151,4 +166,16 @@ def a_star_algorithm(sim: SimEngine, drone: Drone) -> list[str]:
                 path_cost[(curr_hub_name,
                            turn + 1)] = path_cost[(curr_hub_name, turn)]
                 turn += 1
-    # raise NoSolutionError("No solution for this maze!")
+        # if len(neighbors_list) == 0:
+        #     while len(neighbors_list) == 0:
+        #         curr_hub_name, turn = came_from[curr_hub_name]
+        #         curr_hub = hubs_dict.get(curr_hub_name)
+        #         if not curr_hub:
+        #             continue
+        #         neighbors = [
+        #             hubs_dict[names] for names in curr_hub.connected_with if 
+        #             (names, turn) not in path_cost
+        #         ]
+        #         if 
+
+    raise NoPathFound(f"No path for drone {drone.id}!")
