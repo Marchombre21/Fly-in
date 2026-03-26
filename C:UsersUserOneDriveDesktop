@@ -39,13 +39,11 @@ class PathFinder():
         while node in self.came_from:
             node = self.came_from[node]
             name, turn = node
-            if name != prev_name:
-                self.hashmap[(name + '-' + prev_name, turn + 1)].append(drone)
-                self.hashmap[(prev_name + '-' + name, turn + 1)].append(drone)
-                if prev_turn - turn == 2:
-                    self.hashmap[(name + '-' + prev_name, turn + 2)].append(drone)
-                    self.hashmap[(prev_name + '-' + name, turn + 2)].append(drone)
-                    path.append(prev_name)
+            self.hashmap[(name + '-' + prev_name, turn + 1)].append(drone)
+            self.hashmap[(prev_name + '-' + name, turn + 1)].append(drone)
+            if prev_turn - turn == 2:
+                self.hashmap[(name + '-' + prev_name, turn + 2)].append(drone)
+                self.hashmap[(prev_name + '-' + name, turn + 2)].append(drone)
             self.hashmap[(name, turn)].append(drone)
             path.append(name)
             prev_name = name
