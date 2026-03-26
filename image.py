@@ -227,10 +227,10 @@ class View(arcade.Window):
                         )
                     )
 
-                    self.path_points[hub.name + key] = self.make_path_points(
+                    self.path_points[hub.name + '-' + key] = self.make_path_points(
                         start_x, start_y, end_x, end_y, float(hub.width)
                     )
-                    self.path_points[key + hub.name] = self.make_path_points(
+                    self.path_points[key + '-' + hub.name] = self.make_path_points(
                         end_x, end_y, start_x, start_y, float(hub.width)
                     )
                     already_linked.append(key + hub.name)
@@ -271,18 +271,23 @@ class View(arcade.Window):
 
     def takeoff(self, drone: Drone):
 
-        path: list[tuple[float, float]] = self.path_points.get(
-            drone.actual_location + drone.path[self.turn + 1]
-        )
-        mc: int = self.dict_hubs[drone.path[self.turn + 1]].move_cost
+        dest: str = drone.path[self.turn + 1]
+        conn_key: str
+        if '-' in dest:
+            conn_key = dest
+            drone.two_turns = True
+        else:
+            conn_key = drone.actual_location + '-' + dest
+        path: list[tuple[float, float]] = self.path_points[conn_key]
+        # mc: int = self.dict_hubs[drone.path[self.turn + 1]].move_cost
         # if not path:
         #     drone.two_turns = True
         #     path = self.path_points.get(drone.path[self.turn + 1])
         # if not path:
         #     drone.two_turns = False
         #     path = self.path_points.get(drone.path[self.turn - 1])
-        if mc == 2:
-            drone.two_turns = True
+        # if mc == 2:
+        #     drone.two_turns = True
         self.dict_hubs[drone.actual_location].nb_drones_on -= 1
         drone.on_connection = path.copy()
         self.check_quantity(self.dict_hubs[drone.actual_location], drone)
@@ -313,10 +318,18 @@ class View(arcade.Window):
             drone.sprite.texture = self.drones_texture_h
 
     def check_quantity(self, hub: Hub, drone: Drone):
-        src: str = drone.actual_location
         dest: str = drone.path[self.turn + 1]
-        if drone.on_connection and (src + dest, self.turn + 1) in self.hashmap:
-            drone.text.text = "x" + str(len(self.hashmap[(src + dest, self.turn + 1)]))
+
+        if drone.on_connection:
+            if '-' in drone.actual_location:
+                conn_key = drone.actual_location
+            elif '-' in dest:
+                conn_key = dest
+            else:
+                conn_key = drone.actual_location + '-' + dest
+
+            if (conn_key, self.turn + 1) in self.hashmap:
+                drone.text.text = "x" + str(len(self.hashmap[(conn_key, self.turn + 1)]))
         else:
             drone.text.text = ""
 

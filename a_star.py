@@ -45,7 +45,7 @@ class PathFinder():
                 if prev_turn - turn == 2:
                     self.hashmap[(name + '-' + prev_name, turn + 2)].append(drone)
                     self.hashmap[(prev_name + '-' + name, turn + 2)].append(drone)
-                    path.append(prev_name)
+                    path.append(f'{name}-{prev_name}')
             self.hashmap[(name, turn)].append(drone)
             path.append(name)
             prev_name = name
@@ -109,10 +109,10 @@ class PathFinder():
                 #     print('nb autor', curr_hub.connected_with[neighbor.name])
                 if (len(self.hashmap[(neighbor.name, turn + mc)]) >=
                     neighbor.max_drones or len(
-                        self.hashmap[(curr_hub.name + neighbor.name,
+                        self.hashmap[(curr_hub.name + '-' + neighbor.name,
                                       turn + 1)])
                         >= curr_hub.connected_with[neighbor.name]) or\
-                        (mc > 1 and len(self.hashmap[(curr_hub.name +
+                        (mc > 1 and len(self.hashmap[(curr_hub.name + '-' +
                                                       neighbor.name,
                                         turn + 2)]) >=
                             curr_hub.connected_with[neighbor.name]):
