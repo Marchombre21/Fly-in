@@ -10,17 +10,25 @@
 #                                                                             #
 # ****************************************************************************#
 
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import (
+    BaseModel,
+    Field,
+    field_validator,
+    model_validator,
+    ConfigDict
+    )
 from typing_extensions import Self
 from pydantic_core import PydanticCustomError
 from colors import Colors
+from arcade import Text
 
 
 class Hub(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
     x: int
     y: int
-    name: str = Field(pattern=r'^[^ -]+$')
-    zone: str = Field(default='normal')
+    name: str = Field(pattern=r"^[^ -]+$")
+    zone: str = Field(default="normal")
     color: str | None = Field(default=None)
     max_drones: int = Field(default=1, ge=1)
     role: str
@@ -29,35 +37,38 @@ class Hub(BaseModel):
     weight: int = Field(100000)
     width: int = Field(0)
     height: int = Field(0)
+    nb_drones_on: int = Field(default=0)
+    text: Text | None = Field(default=None)
 
-    @field_validator('zone', mode='after')
+    @field_validator("zone", mode="after")
     @classmethod
     def check_zone(cls, value: str) -> str:
-        if value not in ['normal', 'blocked', 'restricted', 'priority']:
+        if value not in ["normal", "blocked", "restricted", "priority"]:
             raise PydanticCustomError(
-                'field_zone_error',
+                "field_zone_error",
                 'Field zone can be either "normal", "blocked", "restricted" or'
-                ' "priority".')
+                ' "priority".',
+            )
         return value
 
-    @field_validator('color', mode='after')
+    @field_validator("color", mode="after")
     @classmethod
     def check_color(cls, value: str) -> str:
         if value not in [color.value for color in list(Colors)]:
             raise PydanticCustomError(
-                'field_color_error',
-                'Unknown color. Check Readme.md to know which colors are'
-                ' supported.', {'Unknown color': value}
+                "field_color_error",
+                "Unknown color. Check Readme.md to know which colors are" " supported.",
+                {"Unknown color": value},
             )
         return value
 
-    @model_validator(mode='after')
+    @model_validator(mode="after")
     def calculate_move_cost(self) -> Self:
         match self.zone:
-            case 'normal' | 'priority':
+            case "normal" | "priority":
                 self.move_cost = 1
-            case 'blocked':
+            case "blocked":
                 self.move_cost = 10000
-            case 'restricted':
+            case "restricted":
                 self.move_cost = 2
         return self

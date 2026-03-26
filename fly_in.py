@@ -44,7 +44,7 @@ def main() -> None:
     pathfinder: PathFinder = PathFinder(sim_engine.hubs, sim_engine.hashmap)
     for drone in sim_engine.list_drones:
         drone.path = pathfinder.a_star_algorithm(drone)
-        # print(drone.path)
+        print(drone.path)
     width: int
     height: int
     width, height = arcade.get_display_size()

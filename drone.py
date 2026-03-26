@@ -10,7 +10,7 @@
 #                                                                             #
 # ****************************************************************************#
 
-from arcade import Sprite
+from arcade import Sprite, Text
 from arcade import SpriteList
 
 
@@ -24,6 +24,7 @@ class Drone():
         self.__len_connection: int
         self.__sprite: Sprite
         self.__id: str = 'D' + str(id + 1)
+        self.text: Text
 
     @property
     def id(self) -> str:

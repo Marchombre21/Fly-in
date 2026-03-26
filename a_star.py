@@ -28,16 +28,25 @@ class PathFinder():
         Return the list of nodes of the correct path from the start
         """
         name: str
+        prev_name: str
+        prev_turn: int
         turn: int
         name, turn = node
         path = [name]
         self.hashmap[(name, turn)].append(drone)
+        prev_name = name
+        prev_turn = turn
         while node in self.came_from:
-            # print(node)
             node = self.came_from[node]
             name, turn = node
+            self.hashmap[(name + prev_name, turn + 1)].append(drone)
+            self.hashmap[(prev_name + name, turn + 1)].append(drone)
+            if prev_turn - turn == 2:
+                self.hashmap[(name + prev_name, turn + 2)].append(drone)
+                self.hashmap[(prev_name + name, turn + 2)].append(drone)
             self.hashmap[(name, turn)].append(drone)
             path.append(name)
+            prev_name = name
         # reverse result to get from beginning to end
         path.reverse()
         return path
@@ -68,19 +77,12 @@ class PathFinder():
         neighbors_list: list[tuple[int, int, tuple[str, int]]] = []
         turn: int = 0
         heappush(neighbors_list, (hub_start.weight, 0, (hub_start.name, turn)))
-        # print(self.hashmap)
         while len(neighbors_list) > 0:
             curr_datas: tuple
             curr_hub_name: str
-            # curr_turn: int
-            # print(neighbors_list)
             _, _, curr_datas = heappop(neighbors_list)
-            # print('DATAS', curr_datas)
             curr_hub_name, turn = curr_datas
-            # print("curr_hub", curr_hub_name)
-            # print(turn)
             curr_hub: Hub | None = self.hubs_dict.get(curr_hub_name)
-            # print("weight:", curr_hub.weight)
             if curr_hub.zone == "blocked":
                 continue
             if curr_hub and curr_hub.role == "end_hub":
@@ -92,59 +94,33 @@ class PathFinder():
             ]
             # Check all possible neighbors of the current cell
             # and register new ones
-            # if len(neighbors) == 0:
-            #     print(curr_hub_name)
-            #     print(neighbors_list)
-            #     print(path_cost)
-            # if drone.id == 'D15':
-            #     print(self.came_from)
-            #     print(curr_hub_name)
-            #     print(neighbors_list)
-            #     print(neighbors)
-            # print(path_cost)
             for neighbor in neighbors:
                 mc: int = neighbor.move_cost
-                # print('neighbor', neighbor.name)
-                # print('nb', hashmap[(neighbor.name, turn)])
-                # print('max drones', neighbor.max_drones)
-                # print('drones lien',
-                #       hashmap[(curr_hub.name + neighbor.name, turn - 1)])
-                # print('lien autorisés', curr_hub.connected_with[neighbor.name])
-                # print(path_cost)
-                # print('nb', hashmap[(neighbor.name, turn + mc)])
-                # print('max', neighbor.max_drones)
-                # print('nb connexion', hashmap[(curr_hub.name + neighbor.name, turn)])
-                # print('nb max', curr_hub.connected_with[neighbor.name])
-                # print('mc', mc)
-                # print('connexion + 1', hashmap[(curr_hub.name + neighbor.name, turn + 1)])
-                # if drone.id == 'D2':
-                #     print(len(self.hashmap[(neighbor.name, turn + mc)]))
-                #     print(neighbor.max_drones)
-                #     print(neighbor.name)
+                # if drone.id == 'D1':
+                #     print('name', neighbor.name)
+                #     print('nb', len(self.hashmap[(neighbor.name, turn + mc)]))
+                #     print('max', neighbor.max_drones)
+                #     print('nb link', len(
+                #         self.hashmap[(curr_hub.name + neighbor.name,
+                #                       turn + 1)]))
+                #     print('nb autor', curr_hub.connected_with[neighbor.name])
                 if (len(self.hashmap[(neighbor.name, turn + mc)]) >=
                     neighbor.max_drones or len(
-                        self.hashmap[(curr_hub.name + '-' + neighbor.name,
-                                      turn)])
+                        self.hashmap[(curr_hub.name + neighbor.name,
+                                      turn + 1)])
                         >= curr_hub.connected_with[neighbor.name]) or\
-                        (mc > 1 and len(self.hashmap[(curr_hub.name + '-' +
+                        (mc > 1 and len(self.hashmap[(curr_hub.name +
                                                       neighbor.name,
-                                        turn + 1)]) >=
+                                        turn + 2)]) >=
                             curr_hub.connected_with[neighbor.name]):
                     continue
-                # if drone.id == 'D2':
-                #     print('pass', neighbor.name)
-                # print('neighbor arrivée', neighbor.name, '\n')
-                # print('Path', path_cost, '\n')
-                # print('name', curr_hub_name, '\n')
-                # print('turn', turn, '\n')
-                # print('voisins', neighbors_list, '\n')
-                # if drone.id == 'D15':
-                #     print('nei name', neighbor.name)
                 new_cost = path_cost[(curr_hub_name,
                                       turn)] + neighbor.move_cost
                 if (neighbor.name,
                         turn + mc) not in path_cost or new_cost < path_cost[(
                             neighbor.name, turn + mc)]:
+                    # if drone.id == 'D1':
+                    #     print('name2', neighbor.name)
                     # if drone.id == 'D15':
                     #     print('nei name pass', neighbor.name)
                     debuff: int = 0 if neighbor.zone == 'priority' else 1
@@ -152,15 +128,15 @@ class PathFinder():
                     heappush(neighbors_list,
                              (new_cost + neighbor.weight, debuff,
                               (neighbor.name, turn + mc)))
-                    if mc == 2:
-                        self.came_from[(curr_hub_name + neighbor.name,
-                                        turn + 1)] = (curr_hub.name, turn)
-                        self.came_from[(neighbor.name, turn +
-                                        mc)] = (curr_hub_name + neighbor.name,
-                                                turn + 1)
-                    else:
-                        self.came_from[(neighbor.name,
-                                        turn + mc)] = (curr_hub.name, turn)
+                    # if mc == 2:
+                    #     # self.came_from[(curr_hub_name + neighbor.name,
+                    #     #                 turn + 1)] = (curr_hub.name, turn)
+                    #     self.came_from[(neighbor.name, turn +
+                    #                     mc)] = (curr_hub_name + neighbor.name,
+                    #                             turn + 1)
+                    # else:
+                    self.came_from[(neighbor.name,
+                                    turn + mc)] = (curr_hub.name, turn)
                     # I add one drone on the hub for the next turn
                     # self.hashmap[(neighbor.name, turn + mc)].append(drone)
                     # I add one drone on the connection between the hubs for
