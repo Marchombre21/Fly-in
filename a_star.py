@@ -18,9 +18,9 @@ from errors import NoPathFound
 class PathFinder():
 
     def __init__(self, hubs_dict: dict[str, Hub],
-                 hashmap: dict[tuple[str, int], list[Drone]]):
+                 hashmap: dict[tuple[str, int], int]):
         self.hubs_dict: dict[str, Hub] = hubs_dict
-        self.hashmap: dict[tuple[str, int], list[Drone]] = hashmap
+        self.hashmap: dict[tuple[str, int], int] = hashmap
         self.came_from: dict[tuple[str, int], tuple[str, int]] = {}
 
     def reconstruct_path(self, node: tuple, drone: Drone):
@@ -28,25 +28,30 @@ class PathFinder():
         Return the list of nodes of the correct path from the start
         """
         name: str
-        prev_name: str
-        prev_turn: int
         turn: int
         name, turn = node
         path = [name]
-        self.hashmap[(name, turn)].append(drone)
-        prev_name = name
-        prev_turn = turn
+        self.hashmap[(name, turn)] += 1
+        prev_name: str = name
+        prev_turn: int = turn
         while node in self.came_from:
             node = self.came_from[node]
             name, turn = node
+
+            # If the drone doesn't move, there is no connection to store
             if name != prev_name:
-                self.hashmap[(name + '-' + prev_name, turn + 1)].append(drone)
-                self.hashmap[(prev_name + '-' + name, turn + 1)].append(drone)
+                self.hashmap[(name + '-' + prev_name, turn + 1)] += 1
+                self.hashmap[(prev_name + '-' + name, turn + 1)] += 1
+                # If the move_cost is 2 the connection is occupied 2 turns
                 if prev_turn - turn == 2:
-                    self.hashmap[(name + '-' + prev_name, turn + 2)].append(drone)
-                    self.hashmap[(prev_name + '-' + name, turn + 2)].append(drone)
+                    self.hashmap[(name + '-' + prev_name,
+                                  turn + 2)] += 1
+                    self.hashmap[(prev_name + '-' + name,
+                                  turn + 2)] += 1
                     path.append(f'{name}-{prev_name}')
-            self.hashmap[(name, turn)].append(drone)
+
+            #
+            self.hashmap[(name, turn)] += 1
             path.append(name)
             prev_name = name
             prev_turn = turn
@@ -99,22 +104,24 @@ class PathFinder():
             # and register new ones
             for neighbor in neighbors:
                 mc: int = neighbor.move_cost
-                # if drone.id == 'D1':
+                # if drone.id == 'D3':
+                #     # print('hashmap', self.hashmap)
+                #     print('mc', mc)
                 #     print('name', neighbor.name)
-                #     print('nb', len(self.hashmap[(neighbor.name, turn + mc)]))
+                #     print('nb', self.hashmap[(neighbor.name, turn + mc)])
                 #     print('max', neighbor.max_drones)
                 #     print('nb link', len(
                 #         self.hashmap[(curr_hub.name + neighbor.name,
                 #                       turn + 1)]))
                 #     print('nb autor', curr_hub.connected_with[neighbor.name])
-                if (len(self.hashmap[(neighbor.name, turn + mc)]) >=
-                    neighbor.max_drones or len(
+                if (self.hashmap[(neighbor.name, turn + mc)] >=
+                    neighbor.max_drones or
                         self.hashmap[(curr_hub.name + '-' + neighbor.name,
-                                      turn + 1)])
+                                      turn + 1)]
                         >= curr_hub.connected_with[neighbor.name]) or\
-                        (mc > 1 and len(self.hashmap[(curr_hub.name + '-' +
-                                                      neighbor.name,
-                                        turn + 2)]) >=
+                        (mc > 1 and self.hashmap[(curr_hub.name + '-' +
+                                                 neighbor.name,
+                                                 turn + 2)] >=
                             curr_hub.connected_with[neighbor.name]):
                     continue
                 new_cost = path_cost[(curr_hub_name,
@@ -122,10 +129,6 @@ class PathFinder():
                 if (neighbor.name,
                         turn + mc) not in path_cost or new_cost < path_cost[(
                             neighbor.name, turn + mc)]:
-                    # if drone.id == 'D1':
-                    #     print('name2', neighbor.name)
-                    # if drone.id == 'D15':
-                    #     print('nei name pass', neighbor.name)
                     debuff: int = 0 if neighbor.zone == 'priority' else 1
                     path_cost[(neighbor.name, turn + mc)] = new_cost
                     heappush(neighbors_list,
@@ -150,17 +153,13 @@ class PathFinder():
                     # print("neighbors_list", neighbors_list)
                     # print("Came from", self.came_from)
                     # print('voisins après', neighbors_list, '\n')
-            # if drone.id == 'D2':
+            # if drone.id == 'D3':
             #     print(len(self.hashmap[(curr_hub_name, turn + 1)]))
             #     print(curr_hub.max_drones)
             #     print(curr_hub.name)
-            if len(self.hashmap[curr_hub_name,
-                                turn + 1]) < curr_hub.max_drones:
+            if self.hashmap[curr_hub_name,
+                                turn + 1] < curr_hub.max_drones:
                 new_cost = path_cost[(curr_hub_name, turn)] + 1
-                # if drone.id == 'D2':
-                #     print(new_cost)
-                #     print(path_cost)
-                # print(path_cost[(curr_hub_name, turn + 1)])
                 if (curr_hub_name,
                         turn + 1) not in path_cost or new_cost < path_cost[(
                             curr_hub_name, turn + 1)]:

@@ -22,10 +22,10 @@ class SimEngine():
     def __init__(self):
         self.__hubs: dict[str, Hub] = {}
         self.__nb_drones: int = 0
-        self.__hashmap: dict[tuple[str, int], list[Drone]] = defaultdict(list)
+        self.__hashmap: dict[tuple[str, int], int] = defaultdict(int)
 
     @property
-    def hashmap(self) -> dict[tuple[str, int], list[Drone]]:
+    def hashmap(self) -> dict[tuple[str, int], int]:
         return self.__hashmap
 
     @property

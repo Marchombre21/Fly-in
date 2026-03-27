@@ -21,9 +21,12 @@ class LogMaker():
         nb_turns: int = max([len(drone.path) for drone in self.__drones_list])
         with open('output.txt', 'a') as f:
             for i in range(nb_turns):
-                for n, drone in enumerate(self.__drones_list):
+                first: bool = True
+                for drone in self.__drones_list:
                     if i + 2 <= len(drone.path):
-                        f.write(drone.id + '-' + drone.path[i + 1])
-                        if n + 1 < len(self.__drones_list):
-                            f.write(' ')
+                        if drone.path[i] != drone.path[i + 1]:
+                            if not first:
+                                f.write(' ')
+                            first = False
+                            f.write(drone.id + '-' + drone.path[i + 1])
                 f.write('\n')
