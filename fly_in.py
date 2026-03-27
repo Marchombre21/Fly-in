@@ -14,7 +14,7 @@ import sys
 import arcade
 from a_star import PathFinder
 from errors import ArgError
-from parsing import parsing
+from parsing import Parser
 from pydantic import ValidationError
 from pydantic_core import PydanticCustomError
 from simulation_engine import SimEngine
@@ -31,7 +31,8 @@ def main() -> None:
     path_map: str = input("Which map? : ")
 
     sim_engine: SimEngine = SimEngine()
-    parsing(sim_engine, path_map)
+    parser: Parser = Parser()
+    parser.parsing(sim_engine, path_map)
     sim_engine.check_coordonates()
     sim_engine.add_drones()
     dijkstra(
