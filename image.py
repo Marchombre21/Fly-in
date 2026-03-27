@@ -59,7 +59,7 @@ class View(arcade.Window):
         self.hub_w: float
         self.drones_list: list[Drone]
         self.dict_hubs: dict[str, Hub]
-        self.hashmap: dict[tuple[str, int], list[Drone]]
+        self.hashmap: dict[tuple[str, int], int]
         self.pause: bool = True
         self.batch: Batch = Batch()
         self.hubs_shapes: ShapeElementList = ShapeElementList()
@@ -398,7 +398,7 @@ class View(arcade.Window):
 
             if (conn_key, self.turn + 1) in self.hashmap:
                 drone.text.text = "x" + str(
-                    len(self.hashmap[(conn_key, self.turn + 1)]))
+                    self.hashmap[(conn_key, self.turn + 1)])
         else:
             drone.text.text = ""
 
