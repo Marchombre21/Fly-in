@@ -42,6 +42,7 @@ class PathFinder():
             if name != prev_name:
                 self.hashmap[(name + '-' + prev_name, turn + 1)] += 1
                 self.hashmap[(prev_name + '-' + name, turn + 1)] += 1
+
                 # If the move_cost is 2 the connection is occupied 2 turns
                 if prev_turn - turn == 2:
                     self.hashmap[(name + '-' + prev_name,
@@ -50,37 +51,34 @@ class PathFinder():
                                   turn + 2)] += 1
                     path.append(f'{name}-{prev_name}')
 
-            #
+            # I store the drone presence in hashmap at that turn
             self.hashmap[(name, turn)] += 1
             path.append(name)
             prev_name = name
             prev_turn = turn
+
         # reverse result to get from beginning to end
         path.reverse()
         return path
 
     def a_star_algorithm(self, drone: Drone) -> list[str]:
         """
-        The A* algorithm assign a cost to each cell and calculate the shortest
-        SolutionPath from this
-        The cost of a cell is defined by
-        ```math
-        f(n) = g(n) + h(n)
-        ```
-        with
-        - f(n): total cost to reach cell n -> Priority, the lower the better!
-        - g(n): actual cost to reach cell n from start
-        - h(n): heuristic (or estimated) cost to reach the goal from cell n
-        """
+        The A* algorithm assign a cost to each hub and calculate the shortest
+        path to the goal.
+        The cost of a hub is defined by f(n) = g(n) + h(n) with
 
-        # Register the precedent node of each newly accessed node
+        - f(n): total cost to reach hub n -> Priority, the lower the better!
+        - g(n): actual cost to reach hub n from start
+        - h(n): heuristic (or estimated) cost to reach the goal from hub n
+        """
 
         for hub in self.hubs_dict.values():
             if hub.role == "start_hub":
                 hub_start: Hub = hub
                 break
-        # Register the "cost" or progress already made g(n)
-        # for each cell visited
+
+        # I initiate the path cost with the first hub and a cost of 0 (the
+        # drone is actually on it)
         path_cost: dict[tuple[str, int], int] = {(hub_start.name, 0): 0}
         neighbors_list: list[tuple[int, int, tuple[str, int]]] = []
         turn: int = 0

@@ -56,7 +56,7 @@ class Parser:
                 element_array: list[str] = element.split('=')
                 if element_array[0] in ['zone', 'color', 'max_drones']:
                     if hub_dict.get(element_array[0]) is None:
-                        hub_dict.update({element_array[0]: element_array[1]})
+                        hub_dict[element_array[0]] = element_array[1]
                     else:
                         raise FormatMetadatasError()
                 else:

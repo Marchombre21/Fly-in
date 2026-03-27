@@ -38,7 +38,6 @@ class View(arcade.Window):
 
     def __init__(self, width: int, height: int, title: str):
         super().__init__(width, height, title)
-        # self.set_update_rate(0.2)
         self.background_color: Color = color.BLACK
         self.background: Texture = arcade.load_texture(
             ":resources:images/backgrounds/stars.png")

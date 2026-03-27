@@ -45,6 +45,10 @@ class SimEngine():
         return self.__hubs
 
     def check_coordonates(self):
+        """If any coordinates are negative, I change them all to bring
+        everything back to a positive base
+        """
+
         min_x: int = min([hub.x for hub in self.__hubs.values()])
         min_y: int = min([hub.y for hub in self.__hubs.values()])
         if min_x < 0:
@@ -57,6 +61,7 @@ class SimEngine():
                 hub.y += offset
 
     def add_hub(self, hub_dict: dict[str, str]) -> None:
+
         name: str = hub_dict.get('name')
         x: str = hub_dict.get('x')
         y: str = hub_dict.get('y')
@@ -66,7 +71,7 @@ class SimEngine():
             if str(hub.x) == x and str(hub.y) == y:
                 raise ConfigError(
                     'Two hubs can\'t be at the same coordonates.')
-        self.__hubs.update({name: Hub(**hub_dict)})
+        self.__hubs[name] = Hub(**hub_dict)
         if len([
                 hub for hub in self.__hubs.values() if hub.role == 'start_hub'
         ]) > 1 or len(
@@ -75,6 +80,8 @@ class SimEngine():
             raise ConfigError('There cannot be more than one start or end.')
 
     def create_connection(self, link: str):
+
+        # It can't have more than one space (in case of metadatas)
         space_count: int = link.count(' ')
         if space_count > 1:
             raise FormatConnectionError()
@@ -83,11 +90,15 @@ class SimEngine():
         if link_array[0].count('-') != 1:
             raise FormatConnectionError()
         names: list[str] = link_array[0].split('-')
+
+        # I check if the hubs exist
         for name in names:
             if not self.__hubs.get(name):
                 raise ConfigError(
                     'You try to make a connection with an unknown hub name.')
         hub: Hub = self.__hubs.get(names[0])
+
+        # The connection can't be specified two times
         if hub.connected_with.get(names[1]):
             raise ConfigError(f'The connection between {names[0]}'
                               f' and {names[1]} is declared twice.')
@@ -103,9 +114,11 @@ class SimEngine():
                     raise NumberLinksError()
             except ValueError:
                 raise NumberLinksError()
-        hub.connected_with.update({names[1]: cap_link})
+
+        # I store the link in both ways
+        hub.connected_with[names[1]] = cap_link
         hub_linked: Hub = self.__hubs.get(names[1])
-        hub_linked.connected_with.update({names[0]: cap_link})
+        hub_linked.connected_with[names[0]] = cap_link
 
     def add_drones(self) -> None:
         self.list_drones: list[Drone] = []
