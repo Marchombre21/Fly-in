@@ -11,11 +11,11 @@
 # ****************************************************************************#
 
 from arcade import Sprite, Text
-from arcade import SpriteList
 
 
 class Drone():
-    def __init__(self, id):
+
+    def __init__(self, id: int) -> None:
         self.__path: list[str] = []
         self.__finish: bool = False
         self.__actual_location: str
@@ -34,10 +34,6 @@ class Drone():
     def len_connection(self) -> int:
         return self.__len_connection
 
-    # @len_connection.setter
-    # def len_connection(self, new_len: int) -> None:
-    #     self.__len_connection = new_len
-
     @property
     def two_turns(self) -> bool:
         return self.__two_turns
@@ -55,19 +51,20 @@ class Drone():
         self.__actual_location = location
 
     @property
-    def finish(self):
+    def finish(self) -> bool:
         return self.__finish
 
     @finish.setter
-    def finish(self, finished: bool):
+    def finish(self, finished: bool) -> None:
         self.__finish = finished
 
     @property
-    def on_connection(self) -> SpriteList:
+    def on_connection(self) -> list[tuple[float, float]] | None:
         return self.__on_connection
 
     @on_connection.setter
-    def on_connection(self, connection: SpriteList) -> None:
+    def on_connection(self,
+                      connection: list[tuple[float, float]] | None) -> None:
         if connection:
             self.__len_connection = len(connection)
         else:
@@ -75,11 +72,11 @@ class Drone():
         self.__on_connection = connection
 
     @property
-    def sprite(self):
+    def sprite(self) -> Sprite:
         return self.__sprite
 
     @sprite.setter
-    def sprite(self, new_sprite: Sprite):
+    def sprite(self, new_sprite: Sprite) -> None:
         self.__sprite = new_sprite
 
     @property

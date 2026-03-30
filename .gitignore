@@ -5,11 +5,13 @@ build/
 dist/
 wheels/
 *.egg-info
+.pytest_cache
 
 # Virtual environments
 .venv
 
 #caches
 .mypy_cache
+*.txt
 
 maps/

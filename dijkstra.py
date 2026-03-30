@@ -14,26 +14,38 @@ from hub_class import Hub
 from heapq import heappop, heappush
 
 
-def dijkstra(hub_list: dict[str, Hub], dest_name: str) -> None:
-    pq: list[tuple[int, str]] = []
-    hub_list[dest_name].weight = 0
-    heappush(pq, (0, dest_name))
+class Dijkstra:
 
-    while pq:
-        curr_weight: int
-        hub_name: str
-        curr_weight, hub_name = heappop(pq)
-        current_hub: Hub = hub_list[hub_name]
+    @staticmethod
+    def dijkstra(hub_list: dict[str, Hub], dest_name: str) -> None:
+        """Dijkstra's algorithm is an algorithm for finding the shortest paths
+        between nodes in a weighted graph
+        """
 
-        if curr_weight > current_hub.weight:
-            continue
+        # The priority queue which contains all neighbors with their weight
+        # (the cost from the goal)
+        pq: list[tuple[int, str]] = []
+        hub_list[dest_name].weight = 0
+        heappush(pq, (0, dest_name))
 
-        for neighbor_name in current_hub.connected_with:
-            hub_n: Hub = hub_list[neighbor_name]
+        while pq:
+            curr_weight: int
+            hub_name: str
+            curr_weight, hub_name = heappop(pq)
+            current_hub: Hub = hub_list[hub_name]
 
-            if hub_n.zone == 'blocked':
+            if curr_weight > current_hub.weight:
                 continue
 
-            if curr_weight + current_hub.move_cost < hub_n.weight:
-                hub_n.weight = curr_weight + current_hub.move_cost
-                heappush(pq, (hub_n.weight, neighbor_name))
+            for neighbor_name in current_hub.connected_with:
+                hub_n: Hub = hub_list[neighbor_name]
+
+                if hub_n.zone == 'blocked':
+                    continue
+
+                # I register the neighbor if the actual weight to reach the
+                # goal plus the move_cost to reach the actual hub is less
+                # expensive than the actual neighbor's weight
+                if curr_weight + current_hub.move_cost < hub_n.weight:
+                    hub_n.weight = curr_weight + current_hub.move_cost
+                    heappush(pq, (hub_n.weight, neighbor_name))

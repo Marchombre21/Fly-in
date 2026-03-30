@@ -2,19 +2,13 @@ import pytest
 from pydantic import ValidationError
 from hub_class import Hub
 from simulation_engine import SimEngine
-from parsing import parsing
-from errors import (
-    ConfigError,
-    KeysError,
-    FormatMetadatasError,
-    FormatHubError,
-    FirstLineError
-    )
+from parsing import Parser
+from errors import (ConfigError, KeysError, FormatMetadatasError,
+                    FormatHubError, FirstLineError)
 
 ALL = [
-    'tests_maps/meta_bad_key.txt', 'tests_maps/too_much_equals.txt',
-    'tests_maps/same_coord.txt', 'tests_maps/bad_key.txt',
-    'tests_maps/two_start.txt', 'tests_maps/first_line_error.txt'
+    'meta_bad_key.txt', 'too_much_equals.txt', 'same_coord.txt', 'bad_key.txt',
+    'two_start.txt', 'first_line_error.txt'
 ]
 
 
@@ -39,7 +33,7 @@ class TestMazeProject:
             'y': 5,
             'name': 'truc',
             'zone': 'restricted',
-            'color': 'red_light',
+            'color': 12,
             'max_drones': 2,
             'role': 'start'
         }
@@ -75,8 +69,9 @@ class TestMazeProject:
         res: list[int] = []
         for path in ALL:
             try:
-                sim: SimEngine = SimEngine(True)
-                parsing(sim, path)
+                sim: SimEngine = SimEngine()
+                parser: Parser = Parser()
+                parser.parsing(sim, path)
             except FormatHubError:
                 res.append(2)
             except FormatMetadatasError:

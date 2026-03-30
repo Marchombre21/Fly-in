@@ -17,7 +17,7 @@ class LogMaker():
     def __init__(self, drones_list: list[Drone]):
         self.__drones_list: list[Drone] = drones_list
 
-    def make_log(self):
+    def make_log(self) -> None:
         nb_turns: int = max([len(drone.path) for drone in self.__drones_list])
         with open('output.txt', 'a') as f:
             for i in range(nb_turns):

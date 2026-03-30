@@ -19,7 +19,7 @@ from errors import (SimError, FormatConnectionError, ConfigError,
 
 class SimEngine():
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.__hubs: dict[str, Hub] = {}
         self.__nb_drones: int = 0
         self.__hashmap: dict[tuple[str, int], int] = defaultdict(int)
@@ -29,11 +29,11 @@ class SimEngine():
         return self.__hashmap
 
     @property
-    def nb_drones(self):
+    def nb_drones(self) -> int:
         return self.__nb_drones
 
     @nb_drones.setter
-    def nb_drones(self, nb: int):
+    def nb_drones(self, nb: int) -> None:
         if not isinstance(nb, int) or nb < 0:
             SimError(
                 'The drones number must be an integer and can\'t be a negative'
@@ -41,10 +41,10 @@ class SimEngine():
         self.__nb_drones = nb
 
     @property
-    def hubs(self):
+    def hubs(self) -> dict[str, Hub]:
         return self.__hubs
 
-    def check_coordonates(self):
+    def check_coordonates(self) -> None:
         """If any coordinates are negative, I change them all to bring
         everything back to a positive base
         """
@@ -56,22 +56,22 @@ class SimEngine():
             for hub in self.hubs.values():
                 hub.x += offset
         if min_y < 0:
-            offset: int = abs(min_y)
+            offset = abs(min_y)
             for hub in self.hubs.values():
                 hub.y += offset
 
     def add_hub(self, hub_dict: dict[str, str]) -> None:
 
-        name: str = hub_dict.get('name')
-        x: str = hub_dict.get('x')
-        y: str = hub_dict.get('y')
+        name: str = hub_dict['name']
+        x: str = hub_dict['x']
+        y: str = hub_dict['y']
         for hub in self.__hubs.values():
             if hub.name == name:
                 raise ConfigError('All hubs must have different names.')
             if str(hub.x) == x and str(hub.y) == y:
                 raise ConfigError(
                     'Two hubs can\'t be at the same coordonates.')
-        self.__hubs[name] = Hub(**hub_dict)
+        self.__hubs[name] = Hub.model_validate(hub_dict)
         if len([
                 hub for hub in self.__hubs.values() if hub.role == 'start_hub'
         ]) > 1 or len(
@@ -79,7 +79,7 @@ class SimEngine():
              for hub in self.__hubs.values() if hub.role == 'end_hub']) > 1:
             raise ConfigError('There cannot be more than one start or end.')
 
-    def create_connection(self, link: str):
+    def create_connection(self, link: str) -> None:
 
         # It can't have more than one space (in case of metadatas)
         space_count: int = link.count(' ')
@@ -96,7 +96,7 @@ class SimEngine():
             if not self.__hubs.get(name):
                 raise ConfigError(
                     'You try to make a connection with an unknown hub name.')
-        hub: Hub = self.__hubs.get(names[0])
+        hub: Hub = self.__hubs[names[0]]
 
         # The connection can't be specified two times
         if hub.connected_with.get(names[1]):
@@ -117,7 +117,7 @@ class SimEngine():
 
         # I store the link in both ways
         hub.connected_with[names[1]] = cap_link
-        hub_linked: Hub = self.__hubs.get(names[1])
+        hub_linked: Hub = self.__hubs[names[1]]
         hub_linked.connected_with[names[0]] = cap_link
 
     def add_drones(self) -> None:

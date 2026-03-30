@@ -4,9 +4,14 @@ UV := uv
 PROG := fly_in.py
 SRCFILES := fly_in.py \
 	simulation_engine.py \
-	field_class.py \
+	hub_class.py \
 	errors.py \
-	colors.py \
+	a_star.py\
+	dijkstra.py\
+	drone.py\
+	image.py\
+	log_maker.py\
+	parsing.py
 
 help:
 	@echo "Available commands:"
@@ -24,6 +29,7 @@ run:
 
 clean:
 	find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+	find . -type d -name ".pytest_cache" -exec rm -rf {} + 2>/dev/null || true
 	find . -type d -name ".mypy_cache" -exec rm -rf {} + 2>/dev/null || true
 	find . -type f -name "*.pyc" -delete
 

@@ -13,19 +13,19 @@
 
 class ArgError(Exception):
 
-    def __init__(self, message: str):
+    def __init__(self, message: str) -> None:
         super().__init__(message)
 
 
 class ConfigError(Exception):
 
-    def __init__(self, message: str):
+    def __init__(self, message: str) -> None:
         super().__init__(message)
 
 
 class FirstLineError(ConfigError):
 
-    def __init__(self):
+    def __init__(self) -> None:
         message: str = 'The first line of the map file must be in "nb_drones:'\
             ' <nb>" format'
         super().__init__(message)
@@ -33,7 +33,7 @@ class FirstLineError(ConfigError):
 
 class KeysError(ConfigError):
 
-    def __init__(self):
+    def __init__(self) -> None:
         message: str = 'Allowed keys in the map file are "nb_drone",'\
             ' "start_hub", "end_hub", "hub" and "connection".'
         super().__init__(message)
@@ -41,7 +41,7 @@ class KeysError(ConfigError):
 
 class FormatHubError(ConfigError):
 
-    def __init__(self):
+    def __init__(self) -> None:
         message: str = 'The hub value must be in <name> <x> <y>'\
             ' <[metadatas](optional)> format.'
         super().__init__(message)
@@ -49,7 +49,7 @@ class FormatHubError(ConfigError):
 
 class FormatConnectionError(ConfigError):
 
-    def __init__(self):
+    def __init__(self) -> None:
         message: str = 'The connection value must be in <name>-<name>'\
             ' [max_link_capacity=<number>(optionnal)] format.'
         super().__init__(message)
@@ -57,14 +57,14 @@ class FormatConnectionError(ConfigError):
 
 class NumberLinksError(ConfigError):
 
-    def __init__(self):
+    def __init__(self) -> None:
         message: str = 'max_link_capacity should be positive integer.'
         super().__init__(message)
 
 
 class FormatMetadatasError(ConfigError):
 
-    def __init__(self):
+    def __init__(self) -> None:
         message: str = 'Metadatas must be in <[zone=<value> color=<value>'\
             ' max_drones=<value>]> format. All are optional and the order'\
             ' doesn\'t matter.'
@@ -73,11 +73,17 @@ class FormatMetadatasError(ConfigError):
 
 class SimError(Exception):
 
-    def __init__(self, message: str):
+    def __init__(self, message: str) -> None:
         super().__init__(message)
 
 
 class NoPathFound(Exception):
 
-    def __init__(self, message: str):
+    def __init__(self, message: str) -> None:
+        super().__init__(message)
+
+
+class UnknownHub(Exception):
+
+    def __init__(self, message: str) -> None:
         super().__init__(message)

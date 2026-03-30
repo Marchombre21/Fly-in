@@ -16,7 +16,8 @@ from errors import (ConfigError, FirstLineError, KeysError, FormatHubError,
 
 
 class Parser:
-    def __init__(self):
+
+    def __init__(self) -> None:
         self.__nb_drones: int
 
     def first_line_parse(self, first: str) -> int:
@@ -29,7 +30,8 @@ class Parser:
             self.__nb_drones = nb
             return nb
         except ValueError:
-            raise ConfigError('The nb_drones value should be a positive integer.')
+            raise ConfigError(
+                'The nb_drones value should be a positive integer.')
 
     def hub(self, role: str, line: str) -> dict[str, str]:
         line_array: list[str] = line.strip().split(' ', 3)
@@ -46,7 +48,8 @@ class Parser:
         }
         if len(line_array) == 4:
             # print(f"3: {line_array[3]}")
-            if not (line_array[3].startswith('[') and line_array[3].endswith(']')):
+            if not (line_array[3].startswith('[')
+                    and line_array[3].endswith(']')):
                 raise FormatHubError()
             if (line_array[3].count(' ') + 1) != (line_array[3].count('=')):
                 # There must be one space less than = in good format.
@@ -62,10 +65,10 @@ class Parser:
                 else:
                     raise FormatMetadatasError()
             if role in ['end_hub', 'start_hub']:
-                hub_dict['max_drones'] = self.__nb_drones
+                hub_dict['max_drones'] = str(self.__nb_drones)
         return hub_dict
 
-    def parsing(self, sim: SimEngine, path: str):
+    def parsing(self, sim: SimEngine, path: str) -> None:
 
         start: bool = False
         end: bool = False
@@ -98,7 +101,5 @@ class Parser:
                             raise KeysError()
                 line = f.readline()
             if not start or not end:
-                raise ConfigError(
-                    'There must be one \'start_hub\' key and one'
-                    ' \'end_hub\' key in the config file.'
-                )
+                raise ConfigError('There must be one \'start_hub\' key and one'
+                                  ' \'end_hub\' key in the config file.')

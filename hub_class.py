@@ -34,8 +34,8 @@ class Hub(BaseModel):
     connected_with: dict[str, int] = Field(default_factory=dict)
     move_cost: int = Field(0)
     weight: int = Field(100000)
-    width: int = Field(0)
-    height: int = Field(0)
+    width: float = Field(0.0)
+    height: float = Field(0.0)
     nb_drones_on: int = Field(default=0)
     text: Text | None = Field(default=None)
 
