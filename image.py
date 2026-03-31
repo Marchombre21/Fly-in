@@ -82,7 +82,7 @@ class View(arcade.Window):
 
         # To have the scale value I use the formula: scale = target size /
         # original size.
-        scaling: float = (start_hub.width * 0.8) / self.drones_texture_nh.width
+        scaling: float = (self.hub_w * 0.8) / self.drones_texture_nh.width
         for i in range(sim.nb_drones):
             sprite: Sprite = Sprite(self.drones_texture_nh, scale=scaling)
             sprite.center_x = (start_hub.x + 0.5) * start_hub.width
@@ -170,14 +170,17 @@ class View(arcade.Window):
         nb_raw = max([hub.y for hub in hub_dict.values()]) + 1
         hub_width: float = self.width / nb_col
         hub_height: float = self.height / nb_raw
-        diameter: float = float(hub_width - self.offset_x)
+        if hub_width < hub_height:
+            diameter: float = float(hub_width - self.offset_x)
+        else:
+            diameter = float(hub_height - self.offset_x)
         for hub in hub_dict.values():
             if hub.role == "start_hub":
                 hub.nb_drones_on = len(self.drones_list)
                 text_hub: str = "x" + str(len(self.drones_list))
             else:
                 text_hub = ""
-            self.hub_w = float(hub_width)
+            self.hub_w = hub_width if hub_width < hub_height else hub_height
             hub.width = hub_width
             hub.height = hub_height
             color_name: Color = color.BLACK if not hub.color else\
@@ -227,7 +230,7 @@ class View(arcade.Window):
             step_size = step_size * (distance / hub_width)
         if distance == 0:
             return [(start_x, start_y)]
-        num_steps: int = int(distance / step_size)
+        num_steps: int = max(int(distance / step_size), 1)
         points: list[tuple[float, float]] = []
 
         for i in range(num_steps + 1):
@@ -295,7 +298,7 @@ class View(arcade.Window):
                     if (int(distance) > int(hub.width) and angle_deg
                             == 0) or (int(distance) > int(hub.height)
                                       and angle_deg == 90):
-                        path_offset = 30.0 * 1.5
+                        path_offset = float(self.hub_w) * 0.2
 
                     # The offset is calculated by multiplying the size of a
                     # sprite by the new angle to which I added 90 degrees using
@@ -473,7 +476,7 @@ class View(arcade.Window):
                         self.adjust_scale(drone)
                     self.adjust_texture(drone)
                 if all_hubs_reached:
-                    time.sleep(1)
+                    time.sleep(0.5)
                     self.turn += 1
         else:
             if not self.congrats:
