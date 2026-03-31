@@ -19,14 +19,17 @@ class LogMaker():
 
     def make_log(self) -> None:
         nb_turns: int = max([len(drone.path) for drone in self.__drones_list])
-        with open('output.txt', 'a') as f:
+        result: str = ''
+        with open('output.txt', 'w') as f:
             for i in range(nb_turns):
                 first: bool = True
                 for drone in self.__drones_list:
                     if i + 2 <= len(drone.path):
                         if drone.path[i] != drone.path[i + 1]:
                             if not first:
-                                f.write(' ')
+                                result += ' '
                             first = False
-                            f.write(drone.id + '-' + drone.path[i + 1])
-                f.write('\n')
+                            result += drone.id + '-' + drone.path[i + 1]
+                if not first:
+                    result += '\n'
+            f.write(result)
