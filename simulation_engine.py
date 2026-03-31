@@ -67,10 +67,12 @@ class SimEngine():
         y: str = hub_dict['y']
         for hub in self.__hubs.values():
             if hub.name == name:
-                raise ConfigError('All hubs must have different names.')
+                raise ConfigError(
+                    f'All hubs must have different names ({name}).')
             if str(hub.x) == x and str(hub.y) == y:
                 raise ConfigError(
-                    'Two hubs can\'t be at the same coordonates.')
+                    f'Two hubs can\'t be at the same coordonates ({hub.name}'
+                    f' and {name}).')
         self.__hubs[name] = Hub.model_validate(hub_dict)
         if len([
                 hub for hub in self.__hubs.values() if hub.role == 'start_hub'
@@ -95,7 +97,8 @@ class SimEngine():
         for name in names:
             if not self.__hubs.get(name):
                 raise ConfigError(
-                    'You try to make a connection with an unknown hub name.')
+                    'You try to make a connection with an unknown hub name'
+                    f' (name: {name}).')
         hub: Hub = self.__hubs[names[0]]
 
         # The connection can't be specified two times

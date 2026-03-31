@@ -62,6 +62,14 @@ class NumberLinksError(ConfigError):
         super().__init__(message)
 
 
+class MetadataError(ConfigError):
+
+    def __init__(self) -> None:
+        message: str = 'Metadatas must be in <data>=<value> format (without'\
+            ' space before and after the equal sign)'
+        super().__init__(message)
+
+
 class FormatMetadatasError(ConfigError):
 
     def __init__(self) -> None:

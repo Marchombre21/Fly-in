@@ -12,7 +12,7 @@
 
 from simulation_engine import SimEngine
 from errors import (ConfigError, FirstLineError, KeysError, FormatHubError,
-                    FormatMetadatasError)
+                    FormatMetadatasError, MetadataError)
 
 
 class Parser:
@@ -53,12 +53,17 @@ class Parser:
                 raise FormatHubError()
             if (line_array[3].count(' ') + 1) != (line_array[3].count('=')):
                 # There must be one space less than = in good format.
-                raise FormatHubError()
+                raise MetadataError()
             meta_array: list[str] = line_array[3].strip('[').strip(']').split()
             for element in meta_array:
                 element_array: list[str] = element.split('=')
                 if element_array[0] in ['zone', 'color', 'max_drones']:
                     if hub_dict.get(element_array[0]) is None:
+                        if element_array[1] == '':
+                            raise ConfigError(
+                                f'The {element_array[0]} metadata must have a'
+                                ' value.'
+                            )
                         hub_dict[element_array[0]] = element_array[1]
                     else:
                         raise FormatMetadatasError()
