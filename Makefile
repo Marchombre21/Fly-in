@@ -18,6 +18,7 @@ help:
 	@echo "  make install     - Install dependencies"
 	@echo "  make run         - Run the application"
 	@echo "  make clean       - Clean temporary files"
+	@echo "  make clean-all   - Clean virtual environment"
 	@echo "  make lint        - Run linters and type checkers"
 	@echo "  make lint-strict - Run linters and type checkers in strict mode"
 
@@ -48,8 +49,5 @@ lint:
 lint-strict:
 	@$(UV) run $(PYTHON) -m flake8 $(SRCFILES)
 	@$(UV) run $(PYTHON) -m mypy $(SRCFILES) --strict
-
-test:
-	@$(UV) run pytest
 
 .PHONY: help install run clean lint lint-strict
