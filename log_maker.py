@@ -13,7 +13,7 @@
 from drone import Drone
 
 
-class LogMaker():
+class LogMaker:
     def __init__(self, drones_list: list[Drone]):
         self.__drones_list: list[Drone] = drones_list
 

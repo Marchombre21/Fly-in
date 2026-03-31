@@ -15,7 +15,7 @@ from drone import Drone
 from errors import NoPathFound, UnknownHub
 
 
-class PathFinder():
+class PathFinder:
 
     def __init__(self, hubs_dict: dict[str, Hub],
                  hashmap: dict[tuple[str, int], int]):

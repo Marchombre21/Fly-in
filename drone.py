@@ -13,7 +13,7 @@
 from arcade import Sprite, Text
 
 
-class Drone():
+class Drone:
 
     def __init__(self, id: int) -> None:
         self.__path: list[str] = []
