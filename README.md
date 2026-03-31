@@ -44,7 +44,9 @@ make test : Execute pytest with the test_samples file.
 
 When you execute ```make run``` command, the program will ask you which map you want to use. At that point, you need to enter the file path for the map you want to use.
 
-# File map constraints
+Then, press enter and its works.
+
+#### File map constraints
 
 Example:
 ```
@@ -124,6 +126,32 @@ traverse this connection simultaneously
 
 • Comments start with ’#’ and are ignored.
 
+#### Output
+
+All movements for each drone and each round are recorded in a file named output.txt.
+
+Example:
+
+```
+D1-waypoint1
+D1-waypoint2 D2-waypoint1
+D1-goal D2-waypoint2
+D2-goal
+```
+
+Each simulation turn is represented by a line.
+
+Each movement follow the format: ```D<ID>-<zone>```, or ```D<ID>-<connection>```
+in case of drones still in flight toward restricted zones.
+
+```D<ID>```refers to the unique drone identifier (e.g., D1, D2).
+
+```<zone>``` is the name of the destination zone.
+
+```<connection>``` is the name of the connection toward a restricted zone.
+
+Drones that do not move in a given turn are omitted from that line.
+
 # Algorithms explanation
 
 ## Dijkstra
@@ -153,116 +181,41 @@ In my implementation, the algorithm runs in reverse to map out the exact costs f
 **Cost Propagation** : It calculates the weight of each neighbor (representing the cost from the goal) and uses heappush to insert them into the queue for further exploration.
 
 ## A*
-JEN SUIS LA
-To solve the maze, we utilize __A* (A-Star)__, a powerful search algorithm that finds the shortest path by combining actual cost with a [heuristic](https://en.wikipedia.org/wiki/Heuristic_(computer_science)) estimate. The heuristic function chosen is the [Manhattan Distance](https://en.wikipedia.org/wiki/Taxicab_geometry). During the processing of the algorithm, each cell has a value assigned to it based on the following formula:
 
-- **Cost Function :** $f(n) = g(n) + h(n)$
-    - $f(n)$: Total estimated cost of the cheapest solution through node $n$.
-    - $g(n)$: Exact cost from start to current cell.
-    - $h(n)$: Heuristic estimated cost to goal (using **Manhattan Distance**).
-- **Logic**: The algorithm prioritizes exploring cells with the lowest $f(n)$, ensuring the most promising paths are checked first.
+To find the path for each drone, I use a Space-Time A* (A-Star) search algorithm.
 
-<p align="center">
-  <table>
-    <tr>
-      <td align="center">
-        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/08/Manhattan_distance.svg/960px-Manhattan_distance.svg.png" width="300" alt="Manhattan Distance">
-        <br>
-        <em>Manhattan Distance in red, blue and yellow</em>
-        <br>
-        <em>Green represents the Euclidean distance</em>
-      </td>
-      <td align="center">
-        <img src="https://miro.medium.com/v2/resize:fit:720/format:webp/1*oais-M3DTKygQKO6cpszXQ.gif" width="300" alt="A* Algorithm">
-        <br>
-        <em>A* Algorithm visualization</em>
-      </td>
-    </tr>
-  </table>
-</p>
+It finds the shortest path by combining the actual accumulated cost with a heuristic estimate. The perfect heuristic $h(n)$ is provided by the reverse Dijkstra algorithm executed previously.
 
+Because multiple drones navigate the same network simultaneously, a standard spatial A* is insufficient. This implementation searches through ```space and time```, where ```each node represents a specific hub at a specific turn```. The algorithm evaluates nodes based on the following cost function:
 
-# Design decisions
+$f(n) = g(n) + h(n)$
 
-### Programmatic Syntax Enforcement:
+$f(n)$: Total estimated cost of the cheapest solution through node $n$.
 
-Relying on the LLM to generate valid JSON structure is probabilistically unstable. Injecting structural tokens manually eliminates formatting errors and reduces the number of inference steps.
+$g(n)$: Exact time cost (number of turns) from the start to the current node, including any waiting turns.
 
-### Separation of Prompts (Two-Step Generation): 
+$h(n)$: Exact remaining cost to the goal, disregarding dynamic obstacles.
 
-The context is cleared and rebuilt between the function selection phase and the parameter extraction phase. This prevents the model's attention mechanism from being diluted by irrelevant function schemas during parameter extraction.
-
-# Challenges faced:
-
-I had trouble understanding how to apply a mask to logits until a colleague pointed me to the numpy library. It allows you to execute this operation in optimized C language at the processor level.
-
-I had a big problem generating regexes. The LLM never suggested the closing token I was expecting and started to hallucinate. 
-Another colleague showed me my mistake: I was blocking all tokens containing the expected character except the one corresponding to it. Except that the LLM was highlighting the tokens I was rejecting, while the token for the character itself was far behind.
-
-# Testing strategy
-
-For my tests, I used the sample file provided. I modified the prompts, function names, and parameters. I included errors, incorrect types, ambiguous prompts, etc. I hope I have covered most of the possibilities.
-
-# Performance analysis
-
-**Accuracy:**
-
-Parameter extraction accuracy relies on the underlying model's comprehension, but the structural accuracy is strictly 100%. Type mismatches (e.g., text inside a number field) are mathematically impossible.
-
-**Speed:**
-
-The constrained generation is faster than standard autoregressive generation. By manually injecting JSON punctuation, the system bypasses the forward pass computations for these tokens. The numpy masking operation is O(V) (where V is vocabulary size) and introduces negligible overhead.
-
-**Reliability:**
-
-The inclusion of deterministic token boundaries ensures that the program will not crash or hang in infinite loops, regardless of the input prompt's ambiguity.
-
-# Example usage
-
-Run the program from the root directory using the following command:
-```bash
-uv run python -m src \
-  --functions_definition data/input/functions_definition.json \
-  --input data/input/function_calling_tests.json \
-  --output data/output/function_calls.json
-```
-or just using ```make run```
-
-**Input example:**
-
-```json
-[
-  {
-    "prompt": "Replace all numbers in 'Hello 34 I'm 233 years old' with NUMBERS"
-  }
-]
-```
-
-**Output example:**
-```json
-[
-  {
-    "prompt": "Replace all numbers in 'Hello 34 I'm 233 years old' with NUMBERS",
-    "name": "fn_substitute_string_with_regex",
-    "parameters": {
-      "source_string": "Hello 34 I'm 233 years old",
-      "regex": "[0-9]+",
-      "replacement": "NUMBERS"
-    }
-  }
-]
-```
+**Logic** : The algorithm prioritizes exploring nodes with the lowest $f(n)$ using a priority queue. To prevent collisions, it cross-references generated nodes with a reservation table (hashmap) containing the future positions of previously routed drones. If a target hub or connection is occupied at turn $T$, the algorithm can evaluate a "wait" action, increasing $g(n)$ by 1 while keeping $h(n)$ static, forcing it to find temporal detours.
 
 # Resources
 
-- **Pydantic**: (https://docs.pydantic.dev/latest/concepts/validators/) / (https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.FieldInfo.asdict)
+- **Dijkstra** : (https://fr.wikipedia.org/wiki/Algorithme_de_Dijkstra)
 
-- **Logits**: (https://medium.com/ai-assimilating-intelligence/building-intuition-on-log-probabilities-in-language-models-8fd00f34c03c)
+- **Algorithm A star** : (https://fr.wikipedia.org/wiki/Algorithme_A*)
 
-- **Constrained decoding**: (https://www.aidancooper.co.uk/constrained-decoding/)
 
 ## AI Usage
 Generative AI tools were used during development for:
 - Debugging.
 - Make this README (Translation in English and reformulation).
-- Help with project structure.
+
+# Visual representation
+
+The [Arcade](https://api.arcade.academy/en/2.6.17/get_started.html) library was selected for the graphical interface due to the following technical characteristics:
+
+**Hardware Acceleration** : Built on top of OpenGL and Pyglet, Arcade utilizes the GPU for rendering. This architecture maintains high performance and stable framerates when simultaneously updating multiple dynamic entities, such as drones and connection states.
+
+**Modern Python Integration** : It natively supports modern Python features, including static type hinting. This ensures full compatibility with the project's strict typing enforcement via mypy.
+
+**Efficient 2D Rendering** : The library provides optimized functions for drawing geometric primitives (shapes, lines) and managing sprites. This directly answers the need to render nodes, weighted paths, and moving objects efficiently.
