@@ -64,13 +64,13 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    # try:
-    main()
-    # except Exception as e:
-    #     print(e)
-    # except ValidationError as e:
-    #     for error in e.errors():
-    #         print(f"{error.get('loc')[0]}: {error.get('input')}\n"
-    #               f"{error.get('msg')}")
-    # except PydanticCustomError as e:
-    #     print(e)
+    try:
+        main()
+    except Exception as e:
+        print(e)
+    except ValidationError as e:
+        for error in e.errors():
+            print(f"{error.get('loc')[0]}: {error.get('input')}\n"
+                  f"{error.get('msg')}")
+    except PydanticCustomError as e:
+        print(e)
