@@ -70,6 +70,7 @@ class View(arcade.Window):
         self.total_cost_text: Text
         self.total_cost: int = 0
         self.finish_batch: Batch = Batch()
+        self.flag: bool = False
         self.congrats: bool = False
 
     def init_drones(self, sim: SimEngine) -> None:
@@ -177,7 +178,11 @@ class View(arcade.Window):
         for hub in hub_dict.values():
             if hub.role == "start_hub":
                 hub.nb_drones_on = len(self.drones_list)
-                text_hub: str = "x" + str(len(self.drones_list))
+                if not self.flag:
+                    text_hub: str = "x" + str(len(self.drones_list))
+                else:
+                    text_hub = "x" + str(len(self.drones_list)) + "/" +\
+                                         str(hub.max_drones)
             else:
                 text_hub = ""
             self.hub_w = hub_width if hub_width < hub_height else hub_height
@@ -329,6 +334,7 @@ class View(arcade.Window):
 
     def setup(self, sim: SimEngine) -> None:
         self.drones_list = sim.list_drones
+        self.flag = sim.flag
         self.hashmap = sim.hashmap
         self.dict_hubs = sim.hubs
         self.init_hubs(sim.hubs)
@@ -440,17 +446,26 @@ class View(arcade.Window):
                 conn_key = dest
             else:
                 conn_key = drone.actual_location + '-' + dest
+            if self.flag:
+                link_hub: str = conn_key.split('-')[1]
+                nb_max_conn: str = '/' + str(hub.connected_with[link_hub])
+            else:
+                nb_max_conn = ''
 
             if (conn_key, self.turn + 1) in self.hashmap:
                 drone.text.text = "x" + str(
-                    self.hashmap[(conn_key, self.turn + 1)])
+                    self.hashmap[(conn_key, self.turn + 1)]) + nb_max_conn
         else:
             drone.text.text = ""
 
         hub_text: Text | None = self.dict_hubs[hub.name].text
+        if self.flag:
+            nb_max_hub: str = '/' + str(hub.max_drones)
+        else:
+            nb_max_hub = ''
         if hub_text is not None:
             if hub.nb_drones_on > 0:
-                hub_text.text = f"x{hub.nb_drones_on}"
+                hub_text.text = f"x{hub.nb_drones_on}" + nb_max_hub
             else:
                 hub_text.text = ""
 

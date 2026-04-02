@@ -25,12 +25,14 @@ from log_maker import LogMaker
 
 def main() -> None:
 
-    if len(sys.argv) > 1:
+    if len(sys.argv) > 2:
         raise ArgError("Too much arguments!")
 
     path_map: str = input("Which map? : ")
 
     sim_engine: SimEngine = SimEngine()
+    if len(sys.argv) == 2 and sys.argv[1] == '--flag':
+        sim_engine.flag = True
     parser: Parser = Parser()
     dijkstra: Dijkstra = Dijkstra()
     parser.parsing(sim_engine, path_map)
