@@ -73,8 +73,8 @@ class MetadataError(ConfigError):
 class FormatMetadatasError(ConfigError):
 
     def __init__(self) -> None:
-        message: str = 'Metadatas must be in <[zone=<value> color=<value>'\
-            ' max_drones=<value>]> format. All are optional and the order'\
+        message: str = 'Metadatas must be in "[zone=<value> color=<value>'\
+            ' max_drones=<value>]" format. All are optional and the order'\
             ' doesn\'t matter.'
         super().__init__(message)
 

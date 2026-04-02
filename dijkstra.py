@@ -12,6 +12,7 @@
 
 from hub_class import Hub
 from heapq import heappop, heappush
+from errors import NoPathFound
 
 
 class Dijkstra:
@@ -26,6 +27,7 @@ class Dijkstra:
         # (the cost from the goal)
         pq: list[tuple[int, str]] = []
         hub_list[dest_name].weight = 0
+        start_hub_reached: bool = False
         heappush(pq, (0, dest_name))
 
         while pq:
@@ -47,5 +49,9 @@ class Dijkstra:
                 # goal plus the move_cost to reach the actual hub is less
                 # expensive than the actual neighbor's weight
                 if curr_weight + current_hub.move_cost < hub_n.weight:
+                    if hub_n.role == 'start_hub':
+                        start_hub_reached = True
                     hub_n.weight = curr_weight + current_hub.move_cost
                     heappush(pq, (hub_n.weight, neighbor_name))
+        if not start_hub_reached:
+            raise NoPathFound("The destination can't be reached.")
