@@ -103,7 +103,6 @@ class Parser:
                             "Each line (except commentaries) should have"
                             ' "<key>:<value>" format'
                         )
-                    # line = line.strip("\n").strip()
                     if first_line:
                         first_line = False
                         sim.nb_drones = self.first_line_parse(line)
